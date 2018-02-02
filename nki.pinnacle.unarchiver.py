@@ -6,7 +6,7 @@ import pyodbc,configparser,sys,os,time,collections##,re,tarfile
 overwrite = False #overwrite if previous dump in local_pinnacle_dir found
 epidclin_basedir = r"W:\Epidclin\EPIDOS\ECR\EVP.INIs\ALL"
 local_pinnacle_dir = r"Z:\brent\pinnacle_dump"
-local_pinnacle_dbname = "pinnacle local" #in your datasources.ini
+local_pinnacle_dbname = "pinnacle_local" #in your datasources.ini
 pinnacle_pacs = r"\\172.19.36.17\archive\Kliniek"
 zexe = r"D:\postdoc\code\7za.exe"
 internal_untar = False #is slower, but no deps.
@@ -118,34 +118,21 @@ for row in rows:
 
     try:
         assert( os.path.isfile(filename) ) #configparser does not throw errors when file not found
-        urls={}
+        urls=[] #there will be multiple beams(/fields) for a matching TP
         ini1 = configparser.ConfigParser()
         ini1.read(filename)
         #alleen fieldurls (==beamurls) nodig voor dosiadump
         for s in ini1.sections():
-            if s.split("_")[0] == "Field":
-                if s.split("_")[1] == upi:
-                    if ini1[s]['ScanUrl'] == "" or ini1[s]['PlanUrl'] == "":
-                        raise ValueError("Empty Pinnacle Urls encountered for mrn "+mrn+". Skipping...\n")
-                    #if 'Epid' in ini1[s]['PlanUrl']:
-                        #raise ValueError("Epid In-aqua plan Pinnacle Urls encountered for mrn "+mrn+". Skipping...\n")
-                    #urls['ScanUrl'] = ini1[s]['ScanUrl']
-                    #urls['PlanUrl'] = ini1[s]['PlanUrl']
             try:
-                if ini1[s]['Plan'] == upi:
-                    if ini1[s]['FieldUrl'] == "" or ini1[s]['DoseUrl'] == "":
-                        raise ValueError("Empty Pinnacle Urls encountered for mrn "+mrn+". Skipping...\n")
-                    urls['FieldUrl'] = ini1[s]['FieldUrl']
-                    #urls['DoseUrl'] = ini1[s]['DoseUrl']
+                if mrn in ini1[s]['FieldUrl'] and 'Epid' not in ini1[s]['FieldUrl'] and ini1[s]['Plan'] == upi:
+                    urls.append(ini1[s]['FieldUrl'])
             except KeyError:
-                pass
-        #if not len(urls) == 4:
-            #raise FileNotFoundError("Not enough Pinnacle Urls for mrn "+mrn+". Skipping...\n")
-        if any('Epid' in str1ng for str1ng in urls):
-            raise ValueError("Epid In-aqua Pinnacle Urls encountered for mrn "+mrn+". Skipping...\n")
+                pass #skip this section
         if len(urls) == 0:
             raise FileNotFoundError("No Pinnacle Urls for mrn "+mrn+". Skipping...\n")
-        studydata[mrn].update({upi:urls})
+        #studydata[mrn][upi][urls]=urls
+        #studydata[mrn].update({upi:urls})
+        studydata[mrn][upi]=urls #other upis with urls may be added later/exist already
     except AssertionError:
         mrn_fails.update({mrn})
         #sys.stderr.write("No entry in epinclin data found for mrn: "+mrn+". Skipping...\n")
@@ -170,6 +157,8 @@ for root, dirs, files in os.walk(pinnacle_pacs):
         #find if theres an archive for this mrn
         if filemrn in studydata:
             new_arcfile = os.path.join(root, filename)
+            #try:
+                #studydata[filemrn]['arcfile'] #if does not exist, except
             if 'arcfile' in studydata[filemrn]:
                 #we already found an archive with this mrn, check for date.
                 existing_arcfile = studydata[filemrn]['arcfile']
@@ -178,15 +167,17 @@ for root, dirs, files in os.walk(pinnacle_pacs):
                 if int(existing_arcfile.split(os.path.sep)[-2]) > int(new_arcfile.split(os.path.sep)[-2]):
                     skipped_arcfiles.append(new_arcfile)
                     break
-            studydata[filemrn].update({'arcfile':new_arcfile})
+            studydata[filemrn]['arcfile']=new_arcfile
 
 sys.stderr.write(str(len(skipped_arcfiles))+" mrn archive duplicates skipped.\n")
+
+#remove MRN if no archive found in previous loop
 
 no_archives_found=[]
 for mrn in list(studydata.keys()):
     try:
         studydata[mrn]['arcfile']
-    except KeyError:
+    except KeyError: #no file found in previous loop, then we remove the mrn because nothing to study.
         del studydata[mrn]
         no_archives_found.append(mrn)
 
@@ -246,23 +237,23 @@ with open(lpdbfile, 'w') as dest_file:
                         firstFile = False
                     if lastFile:
                         writeline = True
-        os.remove(inst_file)
+        #os.remove(inst_file) #leave, is proof of dump for possible next run
     dest_file.write(lpdb_footer)
 
 #update pinnacls_urls to local url and dump to disk for further use
 
 newurls=[]
 for mrn,subdicts in studydata.items():
-    for upi, urldict in subdicts.items():
-        #loop over upis
-        if not upi == 'arcfile':
-            #loop over urls
-            for urltype,url in urldict.items():
-                new_url = "["+local_pinnacle_dbname+"]"+url.split("]")[-1]
-                studydata[mrn][upi][urltype]=new_url
-                newurls.append(new_url+'\n')
-                if mrn not in url:
-                    sys.stderr.write("mrn/upi mismatch: "+mrn+", "+upi+", "+url+"\n")
+    for upi, urls in subdicts.items():
+        if upi == 'arcfile':
+            continue
+        #loop over urls
+        for url in urls:
+            new_url = "["+local_pinnacle_dbname+"]"+url.split("]")[-1]
+            url=new_url
+            newurls.append(new_url+'\n')
+            if mrn not in url:
+                sys.stderr.write("mrn/upi mismatch: "+mrn+", "+upi+", "+url+"\n")
 
 with open(os.path.join(local_pinnacle_dir,'purls.txt'),'w') as purls:
     purls.writelines(newurls) #doesnt do newlines
