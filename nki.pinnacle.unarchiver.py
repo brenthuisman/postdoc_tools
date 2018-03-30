@@ -1,6 +1,6 @@
 # pip install pyodbc
 
-import pyodbc,configparser,sys,os,time,collections##,re,tarfile
+import pyodbc,configparser,sys,os,time,collections,re,tarfile
 
 #settings
 overwrite = False #overwrite if previous dump in local_pinnacle_dir found
@@ -17,8 +17,8 @@ ident i
 JOIN txfield t ON i.pat_id1 = t.pat_id1
 JOIN site s ON i.pat_id1 = s.Pat_ID1
 )
-WHERE t.last_tx_dttm > '2017-01-01'
-AND t.last_tx_dttm < '2018-01-01' --after last treatment, takes bout a month to be archived and available
+WHERE t.last_tx_dttm > '2016-07-01'
+AND t.last_tx_dttm < '2017-07-01' --after last treatment, takes bout a month to be archived and available
 AND t.Type_Enum = 13 --VMAT
 AND t.MachineCharID IN (262,265,275) --agility
 AND t.IsFFF = 0
@@ -71,13 +71,15 @@ BackupVolumeNameList ={
 RestoreSpaceThreshold = 99999.9;
 NumBackupInstitutionFiles = 200;
 MaxAgeOfBackupInstitutionFiles = 180;
-
-/* 6Ñ */
 """
+#/* 6Ñ */
+#"""
 
 # Start program
 
 start_time = time.time()
+
+sys.stderr.write("Welcome to the Pinnacle Unarchiver! Please stand by while your query is run.\n")
 
 if not os.path.isdir(local_pinnacle_dir):
     os.makedirs(local_pinnacle_dir)
@@ -100,49 +102,68 @@ rows = cursor.fetchall()
 
 studydata = collections.defaultdict(dict)
 mrn_fails = set()
+parser_errors = []
 
 sys.stderr.write(str(len(rows))+" results in sql query.\n")
 
 #NOOT: currently active patients are NOT YET in the archive. Only when they are deactivated (i.e. their treatment is over), do they appear in the archive.
 
 #find pinnacle urls
+with open(os.path.join(local_pinnacle_dir,'sql.results'),'w') as sqllog:
+    for row in rows:
+        #sqllog.write('%s \t %s \t %s' % (row.ida, row.Field_Name, row.site_name))
+        
+        #nodig voor testsetrunner: ida, upi, in epidos_sql_db: patientid, upi
+        upi = str(row.site_name.split('<')[1].split('>')[0])
+        mrn = str(row.ida)
+        
+        filename = os.path.join( epidclin_basedir, mrn+".evp.ini")
 
-for row in rows:
-    #print('%s \t %s \t %s' % (row.ida, row.Field_Name, row.site_name))
-    
-    #nodig voor testsetrunner: ida, upi, in epidos_sql_db: patientid, upi
-    upi = str(row.site_name.split('<')[1].split('>')[0])
-    mrn = str(row.ida)
-    
-    filename = os.path.join( epidclin_basedir, mrn+".evp.ini")
-
-    try:
-        assert( os.path.isfile(filename) ) #configparser does not throw errors when file not found
-        urls=[] #there will be multiple beams(/fields) for a matching TP
-        ini1 = configparser.ConfigParser()
-        ini1.read(filename)
-        #alleen fieldurls (==beamurls) nodig voor dosiadump
-        for s in ini1.sections():
+        try:
+            assert( os.path.isfile(filename) ) #configparser does not throw errors when file not found
+            urls=[] #there will be multiple beams(/fields) for a matching TP
             try:
-                if mrn in ini1[s]['FieldUrl'] and 'Epid' not in ini1[s]['FieldUrl'] and ini1[s]['Plan'] == upi:
-                    urls.append(ini1[s]['FieldUrl'])
-            except KeyError:
-                pass #skip this section
-        if len(urls) == 0:
-            raise FileNotFoundError("No Pinnacle Urls for mrn "+mrn+". Skipping...\n")
-        #studydata[mrn][upi][urls]=urls
-        #studydata[mrn].update({upi:urls})
-        studydata[mrn][upi]=urls #other upis with urls may be added later/exist already
-    except AssertionError:
-        mrn_fails.update({mrn})
-        #sys.stderr.write("No entry in epinclin data found for mrn: "+mrn+". Skipping...\n")
-    except FileNotFoundError as e:
-        mrn_fails.update({mrn})
-        #sys.stderr.write(str(e))
-    except ValueError as e:
-        mrn_fails.update({mrn})
-        sys.stderr.write(str(e))
+                ini1 = configparser.ConfigParser(comment_prefixes=('#', ';', '=')) #add = to ignore keyless entries (yeah...)
+                ini1.read(filename)
+                #alleen fieldurls (==beamurls) nodig voor dosiadump
+                for s in ini1.sections():
+                    try:
+                        if mrn in ini1[s]['FieldUrl'] and 'Epid' not in ini1[s]['FieldUrl'] and ini1[s]['Plan'] == upi:
+                            #check if LowEpidISOCDosecGy or EpidISOCDosecGy keys exists, if so if more than 0, THEN ignore (because EPID field)
+                            try:
+                                if float(ini1[s]['EpidISOCDosecGy']) > 0:
+                                    break #next loop
+                            except:
+                                pass #no key or float conv error, no prob
+                            try:
+                                if float(ini1[s]['LowEpidISOCDosecGy']) > 0:
+                                    break #next loop
+                            except:
+                                pass #no key or float conv error, no prob
+                            urls.append(ini1[s]['FieldUrl'])
+                            sqllog.write('%s\t%s\t%s\n' % (row.ida, row.Field_Name, row.site_name))
+                            sqllog.write(ini1[s]['FieldUrl']+'\n')
+                    except KeyError:
+                        pass #skip this section
+                if len(urls) == 0:
+                    raise FileNotFoundError("No Pinnacle Urls for mrn "+mrn+". Skipping...\n")
+                #studydata[mrn][upi][urls]=urls
+                #studydata[mrn].update({upi:urls})
+                studydata[mrn][upi]=urls #other upis with urls may be added later/exist already
+            except configparser.ParsingError:
+                parser_errors.append(mrn)
+                #sys.stderr.write("No entry in epinclin data found for mrn: "+mrn+". Skipping...\n")
+        except AssertionError:
+            mrn_fails.update({mrn})
+            #sys.stderr.write("No entry in epinclin data found for mrn: "+mrn+". Skipping...\n")
+        except FileNotFoundError as e:
+            mrn_fails.update({mrn})
+            #sys.stderr.write(str(e))
+        except ValueError as e:
+            mrn_fails.update({mrn})
+            sys.stderr.write(str(e))
 
+sys.stderr.write(str(len(parser_errors))+" parser errors and skipped evp files.\n")
 sys.stderr.write(str(len(mrn_fails))+" mrns had no or missing data.\n")
 sys.stderr.write(str(len(studydata))+" mrns with full data found.\n")
 
@@ -237,20 +258,26 @@ with open(lpdbfile, 'w') as dest_file:
                         firstFile = False
                     if lastFile:
                         writeline = True
-        #os.remove(inst_file) #leave, is proof of dump for possible next run
+        #os.remove(inst_file) #dont remove, is proof of dump for possible next run
     dest_file.write(lpdb_footer)
 
 #update pinnacls_urls to local url and dump to disk for further use
-
+# NOOT!!!! Pinnacle updates Patientnumber (NOT MRN) every time a patient comes back. All previous patient numbers are updated to the new one. The EPID archives DO NOT DO THIS, so we must find the latest patnr and update old URLs obtained in the epidclin_basedir.
 newurls=[]
 for mrn,subdicts in studydata.items():
     for upi, urls in subdicts.items():
         if upi == 'arcfile':
             continue
-        #loop over urls
+        new_pat_id = None
+        with open(os.path.join(local_pinnacle_dir,str(mrn)+'Institution'),'r',errors='ignore') as inst_file_content:
+            for line in inst_file_content:
+                if 'PatientID =' in line:
+                    new_pat_id = re.findall('[0-9]+',line)[0] #should be only one nr.
+                    break #done, should be only 1
+        #loop over urls, update to new dbname and latest patnr
         for url in urls:
-            new_url = "["+local_pinnacle_dbname+"]"+url.split("]")[-1]
-            url=new_url
+            new_url = re.sub('\[(.*)\]', '['+local_pinnacle_dbname+']', url,1) #replace pinnacle db name
+            new_url = re.sub('\_(.\d+)\.', '_'+new_pat_id+'.',new_url,1) #replace with correct patid
             newurls.append(new_url+'\n')
             if mrn not in url:
                 sys.stderr.write("mrn/upi mismatch: "+mrn+", "+upi+", "+url+"\n")
