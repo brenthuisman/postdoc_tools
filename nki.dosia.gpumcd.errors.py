@@ -7,21 +7,31 @@ local_pinnacle_dir = r"Z:\brent\pinnacle_dump"
 
 errdict = {'-1': "Unknown Error",
            '1': "Ini file missing/corrupt",
+           '2': "No commandline argument for input dir provided",
+           
            '14': "Failed to load dumpfile",
+           
+           '20': "dbtype missing",
+           '21': "Unknown energy",
+           '22': "Unknown beamtype",
+           '23': "Unknown filter",
            '27': "Undefined accelerator",
-           '28': "MLCi80 encountered",
+           
            '30': "GpumcdLibrary init fail",
-           '31': "GpumcdLibrary::setReferenceMedium",
-           '32': "TPS Dose file missing.",
+           '31': "MLCi80 encountered",
+           '32': "No MachineFile for this Machine",
            '33': "GpumcdLibrary stream init fail",
-           '34': "MachineFile missing",
+           '34': "Error reading MachineFile",
            '39': "GpumcdLibrary stream, no output",
-           '41': "dbtype missing",
-           '42': "ct data missing",
+           
            '43': "hu2density missing",
            '44': "hu2material missing",
            '45': "density2material missing",
                
+           '70': "Problem writing vector to file",
+           '71': "Problem writing stringvector to file",
+           '71': "Problem reading vector from file",
+           
            'sql': 'SQL records',
            'purl': 'Pinnacle URLs'
            }

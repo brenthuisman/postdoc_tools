@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import plot,os,image,numpy as np,random
+import plot,os,image,numpy as np,random,datetime
 
 #rundir = os.path.join(r"Z:\brent\dosia_dump",'8903804','20Gy.trialname.1.beam')
 #rundir = r"Z:\brent\dosia_validatiedump\F180220C\6MV_COM.trialname.1.beam"
@@ -33,6 +33,8 @@ for im,leg in zip( [images[0],images[3]], [names[0],names[3]] ):
 for row,crush,xax in zip( [row21[0],row21[1],row21[2]] , [[1,0,1],[0,1,1],[1,1,0]] , [xsize1,xsize1,xsize2] ):
     tps = images[0].getline(crush)
     gpumcd = images[3].getline(crush)
+    print(tps)
+    print(gpumcd)
     row.plot(xax, (gpumcd-tps)/tps ,alpha=0.5,color=col,lw=lw)
     row.set_ylim([-1,1])
 
@@ -82,8 +84,8 @@ for row in (row1,row2,row3):
     row[0].set_xlabel('Axis [mm]')
     row[1].set_xlabel('Axis [mm]')
     row[1].legend(loc='upper right', bbox_to_anchor=(1.2, 1.),frameon=False)
-
-f.savefig(os.path.join(rundir,'dose_prof_pdd.pdf'), bbox_inches='tight')
-f.savefig(os.path.join(rundir,'dose_prof_pdd.png'), bbox_inches='tight',dpi=300)
+now=str(datetime.datetime.now()).split('.')[0].replace(' ','').replace(':','').replace('-','')
+f.savefig(os.path.join(rundir,'dose_prof_pdd_'+now+'.pdf'), bbox_inches='tight')
+f.savefig(os.path.join(rundir,'dose_prof_pdd_'+now+'.png'), bbox_inches='tight',dpi=300)
 
 plot.close('all')

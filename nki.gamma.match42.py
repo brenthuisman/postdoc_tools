@@ -7,157 +7,106 @@ spec.loader.exec_module(foo)
 from M42_Python import *
 
 ## general imports
+import subprocess,collections,os,glob,plot
 
-def readdose(Filename, Dose):
-    READ_XDR(Dose,FileName);
-    FIELD_TO_FLOAT(Dose,Dose);
-    FIELD_MULC(Dose,Dose,Scaling);
+## params
 
-    Xfm = TAVSField.Create;
-    READ_XDR(Xfm,FileName.Split([Char('.')])[0]+'_xfm.xdr');
+gammatool = r"D:\postdoc\code\DoseCompareCmdline\src\Win32\Debug\dosecompare_cmd.exe"
+#local_dose_dir = r"Z:\brent\dosia_dump"
+local_dose_dir = r"Z:\brent\jochempepijn"
+#local_dose_dir = r"Z:\brent\stijn\pinnacle_dump"
+flat=False
+showoutliers = False
 
-    //new grid thats uniform
+#dta = 3 #in mm
+#perc = 3 #perc...
+#localgamma = True
+#isodose = 50 #region where to gather gamma stats, in perc
 
-    //if Grid.Empty then
-    //begin
-    tmpGrid := TAVSField.Create;
-    Corners := TAVSField.Create;
-    GET_CORNER_DOTS(Dose, Corners);
-    DOTXFM(Corners, Xfm, Corners);
-    xmin := Corners.Min_Coord[0];
-    ymin := Corners.Min_Coord[1];
-    zmin := Corners.Min_Coord[2];
-    xmax := Corners.Max_Coord[0];
-    ymax := Corners.Max_Coord[1];
-    zmax := Corners.Max_Coord[2];
-    xnbins:=Round((xmax-xmin) / 0.2);
-    ynbins:=Round((ymax-ymin) / 0.2);
-    znbins:=Round((zmax-zmin) / 0.2);
-    FIELD_GRID(tmpGrid,
-            xnbins,
-            ynbins,
-            znbins,
-            xnbins*0.2,
-            ynbins*0.2,
-            znbins*0.2,
-            xmin + ((xmax-xmin)/2),
-            ymin + ((ymax-ymin)/2),
-            zmin + ((zmax-zmin)/2));
-    //end;
-    FIELDXFM(Dose, Xfm, tmpGrid, Dose, 0, 0, FIELDXFM_3Dfield,1);
-    
-def compute_gamma():
-Gamma1 := TAVSField.Create;
-Gamma2 := TAVSField.Create;
-GammaStatsMaskTmp := TAVSField.Create;
-GammaStatsMask := TAVSField.Create;
-try
-FIELD_MAXC(FDose1,FDose1,FDose1.Maximum*0.10);
-FIELD_MAXC(FDose2,FDose2,FDose1.Maximum*0.10);
-//FIELD_COPY(FDose1,Gamma1);
-//FIELD_COPY(FDose2,Gamma2);
+## sum beam subdirs to whole-fraction
 
-//make new grid the size of the union of the two dosemaps
+frac_names = [] #keep these parallel
+results = []
 
-tmpGrid := TAVSField.Create;
-Corners1 := TAVSField.Create;
-Corners2 := TAVSField.Create;
-GET_CORNER_DOTS(FDose1, Corners1);
-GET_CORNER_DOTS(FDose2, Corners2);
-//DOTXFM(Corners, Xfm, Corners);
+if os.path.isfile(os.path.join(local_dose_dir,'gammaresults.txt')):
+    print("Exisiting gammaresults.txt found, skipping analysis...")
+    with open(os.path.join(local_dose_dir,'gammaresults.txt'),'r') as resultfile:
+        results=resultfile.readlines()
+    for i in range(len(results)):
+        results[i] = results[i].split(' ',1)[-1]
+else:
+    beams = sorted( glob.glob( os.path.join(local_dose_dir,"*/*/gpumcd_dose.xdr") , recursive=True ) )
 
-xmin := math.max(Corners1.Min_Coord[0],Corners2.Min_Coord[0]);
-ymin := math.max(Corners1.Min_Coord[1],Corners2.Min_Coord[1]);
-zmin := math.max(Corners1.Min_Coord[2],Corners2.Min_Coord[2]);
-xmax := math.min(Corners1.Max_Coord[0],Corners2.Max_Coord[0]);
-ymax := math.min(Corners1.Max_Coord[1],Corners2.Max_Coord[1]);
-zmax := math.min(Corners1.Max_Coord[2],Corners2.Max_Coord[2]);
+    fractions = collections.defaultdict(list)
 
-xnbins:=Round((xmax-xmin) / 0.2);
-ynbins:=Round((ymax-ymin) / 0.2);
-znbins:=Round((zmax-zmin) / 0.2);
-FIELD_GRID(tmpGrid,
-        xnbins,
-        ynbins,
-        znbins,
-        xnbins*0.2,
-        ynbins*0.2,
-        znbins*0.2,
-        xmin + ((xmax-xmin)/2),
-        ymin + ((ymax-ymin)/2),
-        zmin + ((zmax-zmin)/2));
+    for beam in beams:
+        assert(beam.endswith(".beam\gpumcd_dose.xdr"))
+        base = beam[:-33]
+        #beamnr = beam[-7]
+        fractions[base].append(beam.replace("gpumcd_dose.xdr",""))
 
-FIELDXFM(FDose2, nil, tmpGrid, Gamma2, 0, 0,FIELDXFM_3Dfield, 1);
-FIELDXFM(FDose1, nil, tmpGrid, Gamma1, 0, 0,FIELDXFM_3Dfield, 1);
+    for frac,beams in fractions.items():
+        tpsdosesum_fname = frac+'.tps.xdr'
+        gpumcddosesum_fname = frac+'.gpumcd.xdr'
 
-if MaxC <> 0.0 then
-begin
-FIELD_MAXC(Gamma1, Gamma1, 0.001);
-FIELD_MAXC(Gamma2, Gamma2, 0.001);
-end;
-DOSE_GAMMA(Gamma1, Gamma2, FGamma, 0.0, 0.3, 10000.0, 1.0,
-StrToFloatDef(edtCriteria.Text,3.0) / 100.0, StrToFloatDef(edtDTA.Text,3.0) / 10.0,
-MaxDist, Outside, NormDose, Accuracy);
-FIELD_MULC(FGamma, FGamma, 100);
-level := FDose1.Maximum * StrToFloatDef(edtIsodose.Text,50)/100.0;
+        tpsdosesum = TAVSField()
+        gpumcddosesum = TAVSField()
 
-// 2 stats mask: gamma values only in isodose% of dose1,2
-FldTmp1 := TAVSField.Create;
-FldTmp2 := TAVSField.Create;
-try
-if FDose1.Ndim=2 then
-    FIELDXFM(FDose1, nil, FGamma, FldTmp1)
-else
-    FIELDXFM(FDose1, nil, FGamma, FldTmp1, 0, 0, FIELDXFM_3Dfield, 1);
-FIELD_GTEC(FldTmp1, FldTmp1, level);
-FIELD_DIVC(FldTmp1, FldTmp1, 255);
-if FDose1.Ndim=2 then
-    FIELDXFM(FDose2, nil, FGamma, FldTmp2)
-else
-    FIELDXFM(FDose2, nil, FGamma, FldTmp2, 0, 0,FIELDXFM_3Dfield, 1);
-FIELD_GTEC(FldTmp2, FldTmp2, level);
-FIELD_DIVC(FldTmp2, FldTmp2, 255);
-// union of both volumes
-//   FIELD_ADD(FldTmp1, FldTmp2, GammaStatsMask);
-FIELD_COPY(FldTmp1, GammaStatsMask);
-FIELD_GTEC(GammaStatsMask, GammaStatsMask, 1);
-FIELD_DIVC(GammaStatsMask, GammaStatsMask, 255);
-// use then GammaStatsMask for statistics
-FIELD_TO_BYTE(GammaStatsMask, GammaStatsMask, 1, 1, true);
-if GammaStatsMask.Datatype = AVS_TYPE_BYTE then
-begin
-    FIELD_MASK(FGamma, GammaStatsMask, GammaStatsMaskTmp, 0.0);
-end
-else
-begin
-    FIELD_MUL(FGamma, GammaStatsMask, GammaStatsMaskTmp);
-end;
+        try:
+            for i,beam in enumerate(beams):
+                tpsdose = TAVSField()
+                gpumcddose = TAVSField()
 
-## test program
+                READ_XDR(tpsdose,beam+"/dose.xdr")
+                READ_XDR(gpumcddose,beam+"/gpumcd_dose.xdr")
 
-paturl = r"Z:\brent\pinnacle_dump_2\20402067"
-PatientProps=TAVSField()
-tmpUrl = ""
-param = ""
-dum = ""
+                if i is 0:
+                    FIELD_COPY(tpsdose,tpsdosesum)
+                    FIELD_COPY(gpumcddose,gpumcddosesum)
+                else:
+                    FIELD_ADD(tpsdose,tpsdosesum,tpsdosesum) #3rd arg is output field
+                    FIELD_ADD(gpumcddose,gpumcddosesum,gpumcddosesum)
 
-#int READ_PINNACLE_compute(AVSfield** ppOut,char* pszDirectoryName,
-                      #char* pszSelection, char* pszParamName, char* pszResult,
-                      #char* pszExtra)
-pin = READ_PINNACLE(PatientProps, paturl, tmpUrl, param , dum)
+                tpsdose.Free()
+                gpumcddose.Free()
 
-print (pin)
-print (PatientProps)
-print (tmpUrl)
-print (param)
-print (dum)
+        except Exception as e:
+            print("AVS Exception occurred.")
+            print(frac,beam)
+            print("AVS Exception description:")
+            print(e)
+        WRITE_XDR(tpsdosesum,tpsdosesum_fname)
+        WRITE_XDR(gpumcddosesum,gpumcddosesum_fname)
 
+        tpsdosesum.Free()
+        gpumcddosesum.Free()
 
+        frac_names.append('\\'.join(frac.split('\\')[-2:]))
+        cmd = gammatool+' /dose1 '+tpsdosesum_fname+' /dose2 '+gpumcddosesum_fname+' /outgamma null'
+        #print(cmd)
+        result = subprocess.check_output(cmd).decode('utf-8').strip()
+        print(result)
+        results.append(result+'\n')
 
-"""
-    WriteProperties(subdir,FScanUrl);
-    WriteProperties(subdir,FPlanUrl);
-    WriteProperties(subdir,FTrialUrl);
-    WriteProperties(subdir,FBeamUrl);
-    WriteProperties(subdir,FDoseUrl);
-    => [pinnacle local]:20402067:Patient_00000.patient\ImageSet_2.scan\_2.plan\Hersnn.trialname\1.beam\093.dose
+    with open(os.path.join(local_dose_dir,'gammaresults.txt'),'w') as resultfile:
+        resultfile.writelines([i+': '+j for i,j in zip(frac_names,results)])
+
+data = collections.defaultdict(list)
+for line in results:
+    for item in line.split():
+        data[item.split('=')[0]].append(float(item.split('=')[-1]))
+
+if flat:
+    f, ax1 = plot.subplots(nrows=1, ncols=1, sharex=False, sharey=False)
+    ax1.boxplot( data.values() , labels=data.keys() , showfliers=showoutliers )
+    ax1.set_yscale('log')
+else:
+    f, axes = plot.subplots(nrows=2, ncols=3, sharex=False, sharey=False)
+    for index,(dat,val) in enumerate(zip(data.values(),data.keys())):
+        axes[ index//3 , index%3 ].boxplot( dat , showfliers=showoutliers )
+        axes[ index//3 , index%3 ].set_title(val)
+        #axes[ index//3 , index%3 ].set_yscale('log')
+
+f.savefig(os.path.join(local_dose_dir,'gammaanalysis.pdf'), bbox_inches='tight')
+f.savefig(os.path.join(local_dose_dir,'gammaanalysis.png'), bbox_inches='tight',dpi=300)
+plot.close('all')
