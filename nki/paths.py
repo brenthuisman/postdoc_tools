@@ -1,0 +1,5 @@
+dosiaengine = r"D:\postdoc\code\gpumcd_rtplan\x64\Release\dosia.exe"
+xdr_arithm = r"D:\postdoc\code\xdr_arithm\src\Win32\Debug\xdr_arithm.exe"
+dosecompare = r"D:\postdoc\code\DoseCompareCmdline\src\Win32\Debug\dosecompare_cmd.exe"
+xdr_cropas = r"D:\postdoc\code\xdr_cropas\src\Win32\Debug\xdr_cropas.exe"
+xdr_setongrid = r"D:\postdoc\code\xdr_setongrid\src\Win32\Debug\xdr_setongrid.exe"

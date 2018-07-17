@@ -42,7 +42,7 @@ ORDER BY i.ida, t.Field_Name, s.site_name ASC;
 
 lpdb_header = """SiteName = "AvL/NKI Amsterdam";
 InstitutionList ={
-  Institution ={"""
+Institution ={"""
 lpdb_footer = """  };
 };
 DefaultInstitution = "Institution_0";
@@ -82,19 +82,19 @@ start_time = time.time()
 sys.stderr.write("Welcome to the Pinnacle Unarchiver! Please stand by while your query is run.\n")
 
 if not os.path.isdir(local_pinnacle_dir):
-    os.makedirs(local_pinnacle_dir)
+	os.makedirs(local_pinnacle_dir)
 
 lpdbfile = os.path.join(local_pinnacle_dir,'LPDB')
 
 #run sql query
 
 cnxn = pyodbc.connect(
-    r'DRIVER={ODBC Driver 11 for SQL Server};'
-    r'SERVER=rtmquery.radim.local\mquery;'
+	r'DRIVER={ODBC Driver 11 for SQL Server};'
+	r'SERVER=rtmquery.radim.local\mquery;'
 #    r'DATABASE=;'
-    r'UID=epid-dos;'
-    r'PWD=ep1d-d0s'
-    )
+	r'UID=epid-dos;'
+	r'PWD=ep1d-d0s'
+	)
 
 cursor = cnxn.cursor()
 cursor.execute(sqlquery)
@@ -110,58 +110,58 @@ sys.stderr.write(str(len(rows))+" results in sql query.\n")
 
 #find pinnacle urls
 with open(os.path.join(local_pinnacle_dir,'sql.results'),'w') as sqllog:
-    for row in rows:
-        #sqllog.write('%s \t %s \t %s' % (row.ida, row.Field_Name, row.site_name))
-        
-        #nodig voor testsetrunner: ida, upi, in epidos_sql_db: patientid, upi
-        upi = str(row.site_name.split('<')[1].split('>')[0])
-        mrn = str(row.ida)
-        
-        filename = os.path.join( epidclin_basedir, mrn+".evp.ini")
+	for row in rows:
+		#sqllog.write('%s \t %s \t %s' % (row.ida, row.Field_Name, row.site_name))
+		
+		#nodig voor testsetrunner: ida, upi, in epidos_sql_db: patientid, upi
+		upi = str(row.site_name.split('<')[1].split('>')[0])
+		mrn = str(row.ida)
+		
+		filename = os.path.join( epidclin_basedir, mrn+".evp.ini")
 
-        try:
-            assert( os.path.isfile(filename) ) #configparser does not throw errors when file not found
-            urls=[] #there will be multiple beams(/fields) for a matching TP
-            try:
-                ini1 = configparser.ConfigParser(comment_prefixes=('#', ';', '=')) #add = to ignore keyless entries (yeah...)
-                ini1.read(filename)
-                #alleen fieldurls (==beamurls) nodig voor dosiadump
-                for s in ini1.sections():
-                    try:
-                        if mrn in ini1[s]['FieldUrl'] and 'Epid' not in ini1[s]['FieldUrl'] and ini1[s]['Plan'] == upi:
-                            #check if LowEpidISOCDosecGy or EpidISOCDosecGy keys exists, if so if more than 0, THEN ignore (because EPID field)
-                            try:
-                                if float(ini1[s]['EpidISOCDosecGy']) > 0:
-                                    break #next loop
-                            except:
-                                pass #no key or float conv error, no prob
-                            try:
-                                if float(ini1[s]['LowEpidISOCDosecGy']) > 0:
-                                    break #next loop
-                            except:
-                                pass #no key or float conv error, no prob
-                            urls.append(ini1[s]['FieldUrl'])
-                            sqllog.write('%s\t%s\t%s\n' % (row.ida, row.Field_Name, row.site_name))
-                            sqllog.write(ini1[s]['FieldUrl']+'\n')
-                    except KeyError:
-                        pass #skip this section
-                if len(urls) == 0:
-                    raise FileNotFoundError("No Pinnacle Urls for mrn "+mrn+". Skipping...\n")
-                #studydata[mrn][upi][urls]=urls
-                #studydata[mrn].update({upi:urls})
-                studydata[mrn][upi]=urls #other upis with urls may be added later/exist already
-            except configparser.ParsingError:
-                parser_errors.append(mrn)
-                #sys.stderr.write("No entry in epinclin data found for mrn: "+mrn+". Skipping...\n")
-        except AssertionError:
-            mrn_fails.update({mrn})
-            #sys.stderr.write("No entry in epinclin data found for mrn: "+mrn+". Skipping...\n")
-        except FileNotFoundError as e:
-            mrn_fails.update({mrn})
-            #sys.stderr.write(str(e))
-        except ValueError as e:
-            mrn_fails.update({mrn})
-            sys.stderr.write(str(e))
+		try:
+			assert( os.path.isfile(filename) ) #configparser does not throw errors when file not found
+			urls=[] #there will be multiple beams(/fields) for a matching TP
+			try:
+				ini1 = configparser.ConfigParser(comment_prefixes=('#', ';', '=')) #add = to ignore keyless entries (yeah...)
+				ini1.read(filename)
+				#alleen fieldurls (==beamurls) nodig voor dosiadump
+				for s in ini1.sections():
+					try:
+						if mrn in ini1[s]['FieldUrl'] and 'Epid' not in ini1[s]['FieldUrl'] and ini1[s]['Plan'] == upi:
+							#check if LowEpidISOCDosecGy or EpidISOCDosecGy keys exists, if so if more than 0, THEN ignore (because EPID field)
+							try:
+								if float(ini1[s]['EpidISOCDosecGy']) > 0:
+									break #next loop
+							except:
+								pass #no key or float conv error, no prob
+							try:
+								if float(ini1[s]['LowEpidISOCDosecGy']) > 0:
+									break #next loop
+							except:
+								pass #no key or float conv error, no prob
+							urls.append(ini1[s]['FieldUrl'])
+							sqllog.write('%s\t%s\t%s\n' % (row.ida, row.Field_Name, row.site_name))
+							sqllog.write(ini1[s]['FieldUrl']+'\n')
+					except KeyError:
+						pass #skip this section
+				if len(urls) == 0:
+					raise FileNotFoundError("No Pinnacle Urls for mrn "+mrn+". Skipping...\n")
+				#studydata[mrn][upi][urls]=urls
+				#studydata[mrn].update({upi:urls})
+				studydata[mrn][upi]=urls #other upis with urls may be added later/exist already
+			except configparser.ParsingError:
+				parser_errors.append(mrn)
+				#sys.stderr.write("No entry in epinclin data found for mrn: "+mrn+". Skipping...\n")
+		except AssertionError:
+			mrn_fails.update({mrn})
+			#sys.stderr.write("No entry in epinclin data found for mrn: "+mrn+". Skipping...\n")
+		except FileNotFoundError as e:
+			mrn_fails.update({mrn})
+			#sys.stderr.write(str(e))
+		except ValueError as e:
+			mrn_fails.update({mrn})
+			sys.stderr.write(str(e))
 
 sys.stderr.write(str(len(parser_errors))+" parser errors and skipped evp files.\n")
 sys.stderr.write(str(len(mrn_fails))+" mrns had no or missing data.\n")
@@ -172,23 +172,23 @@ skipped_arcfiles = []
 #first create list of archive mrn folders, then only take latest (it should contain all older info!)
 
 for root, dirs, files in os.walk(pinnacle_pacs):
-    #sys.stderr.write(files)
-    for filename in files:
-        filemrn = filename.split('.')[0]
-        #find if theres an archive for this mrn
-        if filemrn in studydata:
-            new_arcfile = os.path.join(root, filename)
-            #try:
-                #studydata[filemrn]['arcfile'] #if does not exist, except
-            if 'arcfile' in studydata[filemrn]:
-                #we already found an archive with this mrn, check for date.
-                existing_arcfile = studydata[filemrn]['arcfile']
-                
-                #date is simply the topmost dir (YYYYMMDD)
-                if int(existing_arcfile.split(os.path.sep)[-2]) > int(new_arcfile.split(os.path.sep)[-2]):
-                    skipped_arcfiles.append(new_arcfile)
-                    break
-            studydata[filemrn]['arcfile']=new_arcfile
+	#sys.stderr.write(files)
+	for filename in files:
+		filemrn = filename.split('.')[0]
+		#find if theres an archive for this mrn
+		if filemrn in studydata:
+			new_arcfile = os.path.join(root, filename)
+			#try:
+				#studydata[filemrn]['arcfile'] #if does not exist, except
+			if 'arcfile' in studydata[filemrn]:
+				#we already found an archive with this mrn, check for date.
+				existing_arcfile = studydata[filemrn]['arcfile']
+				
+				#date is simply the topmost dir (YYYYMMDD)
+				if int(existing_arcfile.split(os.path.sep)[-2]) > int(new_arcfile.split(os.path.sep)[-2]):
+					skipped_arcfiles.append(new_arcfile)
+					break
+			studydata[filemrn]['arcfile']=new_arcfile
 
 sys.stderr.write(str(len(skipped_arcfiles))+" mrn archive duplicates skipped.\n")
 
@@ -196,11 +196,11 @@ sys.stderr.write(str(len(skipped_arcfiles))+" mrn archive duplicates skipped.\n"
 
 no_archives_found=[]
 for mrn in list(studydata.keys()):
-    try:
-        studydata[mrn]['arcfile']
-    except KeyError: #no file found in previous loop, then we remove the mrn because nothing to study.
-        del studydata[mrn]
-        no_archives_found.append(mrn)
+	try:
+		studydata[mrn]['arcfile']
+	except KeyError: #no file found in previous loop, then we remove the mrn because nothing to study.
+		del studydata[mrn]
+		no_archives_found.append(mrn)
 
 sys.stderr.write(str(len(no_archives_found))+" mrns did not have a file in the pinnacle archive. Skipping them from study.\n")
 
@@ -209,81 +209,83 @@ sys.stderr.write(str(len(no_archives_found))+" mrns did not have a file in the p
 skip_dump=[]
 inst_files=[]
 for mrn,subdicts in studydata.items():
-    #even when skipping dump, stil generating new LPDB file so need to fill inst_files
-    inst_files.append(os.path.join(local_pinnacle_dir,str(mrn)+'Institution'))
-    if os.path.isfile(os.path.join(local_pinnacle_dir,str(mrn)+'Institution')) and overwrite == False:
-        skip_dump.append(mrn)
-        #sys.stderr.write("Mrn "+mrn+" already dumped, skipping dump...\n")
-        continue
-    else:
-        filename = subdicts['arcfile']
-        sys.stderr.write("Found mrn file "+filename+" in Pinnacle archive, copying...\n")
-        #use 7zip because its much faster and autorenames illegal chars (dont worry bout errors)
-        if internal_untar is False:
-            os.system(zexe+' x '+filename+ ' -so | '+zexe+' x -aoa -si -ttar -o'+local_pinnacle_dir)
-        if internal_untar:
-            #use python internal untar, no deps but slower.
-            with tarfile.open(os.path.join(root, filename),'r') as tarball:
-                for f in tarball: #replace invalid chars like tar to underscores
-                    f.name = re.sub(r'[:]', '_', f.name)
-                tarball.extractall(local_pinnacle_dir)
-        #all is extracted in same dir. rescue Institution files because we need them later.
-        os.rename(os.path.join(local_pinnacle_dir,'Institution'),os.path.join(local_pinnacle_dir,str(mrn)+'Institution'))
+	#even when skipping dump, stil generating new LPDB file so need to fill inst_files
+	inst_files.append(os.path.join(local_pinnacle_dir,str(mrn)+'Institution'))
+	if os.path.isfile(os.path.join(local_pinnacle_dir,str(mrn)+'Institution')) and overwrite == False:
+		skip_dump.append(mrn)
+		#sys.stderr.write("Mrn "+mrn+" already dumped, skipping dump...\n")
+		continue
+	else:
+		filename = subdicts['arcfile']
+		sys.stderr.write("Found mrn file "+filename+" in Pinnacle archive, copying...\n")
+		#use 7zip because its much faster and autorenames illegal chars (dont worry bout errors)
+		if internal_untar is False:
+			os.system(zexe+' x '+filename+ ' -so | '+zexe+' x -aoa -si -ttar -o'+local_pinnacle_dir)
+		if internal_untar:
+			#use python internal untar, no deps but slower.
+			with tarfile.open(os.path.join(root, filename),'r') as tarball:
+				for f in tarball: #replace invalid chars like tar to underscores
+					f.name = re.sub(r'[:]', '_', f.name)
+				tarball.extractall(local_pinnacle_dir)
+		#all is extracted in same dir. rescue Institution files because we need them later.
+		os.rename(os.path.join(local_pinnacle_dir,'Institution'),os.path.join(local_pinnacle_dir,str(mrn)+'Institution'))
 
 sys.stderr.write(str(len(skip_dump))+" mrn dumps skipped because existing data encountered.\n")
 
 #make lpdb file
 
 with open(lpdbfile, 'w') as dest_file:
-    dest_file.write(lpdb_header)
-    
-    firstFile = True #copy only first Institution file
-    lastFile = False
-    
-    for i,inst_file in enumerate(inst_files):
-        if i+1 == len(inst_files):
-            lastFile = True
-        with open(inst_file,'r',errors='ignore') as inst_file_content:
-            writeline = False
-            if firstFile:
-                writeline = True
-            for line in inst_file_content:
-                if 'PatientLite ={' in line:
-                    writeline=True
-                if writeline:
-                    dest_file.write(line)
-                if writeline==True and '};' in line:
-                    writeline=False
-                    if firstFile:
-                        firstFile = False
-                    if lastFile:
-                        writeline = True
-        #os.remove(inst_file) #dont remove, is proof of dump for possible next run
-    dest_file.write(lpdb_footer)
+	dest_file.write(lpdb_header)
+	
+	firstFile = True #copy only first Institution file
+	lastFile = False
+	
+	for i,inst_file in enumerate(inst_files):
+		if i+1 == len(inst_files):
+			lastFile = True
+		with open(inst_file,'r',errors='ignore') as inst_file_content:
+			writeline = False
+			if firstFile:
+				writeline = True
+			for line in inst_file_content:
+				if 'PatientLite ={' in line:
+					writeline=True
+				if writeline:
+					if 'FormattedDescription' in line:
+						FormattedDescription = "DEMO&&IMRT&&&&-1&&LGR LongR 20130402&&2013-05-14 09:24:45";
+					dest_file.write(line)
+				if writeline==True and '};' in line:
+					writeline=False
+					if firstFile:
+						firstFile = False
+					if lastFile:
+						writeline = True
+		#os.remove(inst_file) #dont remove, is proof of dump for possible next run
+	dest_file.write(lpdb_footer)
 
 #update pinnacls_urls to local url and dump to disk for further use
 # NOOT!!!! Pinnacle updates Patientnumber (NOT MRN) every time a patient comes back. All previous patient numbers are updated to the new one. The EPID archives DO NOT DO THIS, so we must find the latest patnr and update old URLs obtained in the epidclin_basedir.
 newurls=[]
 for mrn,subdicts in studydata.items():
-    for upi, urls in subdicts.items():
-        if upi == 'arcfile':
-            continue
-        new_pat_id = None
-        with open(os.path.join(local_pinnacle_dir,str(mrn)+'Institution'),'r',errors='ignore') as inst_file_content:
-            for line in inst_file_content:
-                if 'PatientID =' in line:
-                    new_pat_id = re.findall('[0-9]+',line)[0] #should be only one nr.
-                    break #done, should be only 1
-        #loop over urls, update to new dbname and latest patnr
-        for url in urls:
-            new_url = re.sub('\[(.*)\]', '['+local_pinnacle_dbname+']', url,1) #replace pinnacle db name
-            new_url = re.sub('\_(.\d+)\.', '_'+new_pat_id+'.',new_url,1) #replace with correct patid
-            newurls.append(new_url+'\n')
-            if mrn not in url:
-                sys.stderr.write("mrn/upi mismatch: "+mrn+", "+upi+", "+url+"\n")
+	for upi, urls in subdicts.items():
+		if upi == 'arcfile':
+			continue
+		new_pat_id = None
+		with open(os.path.join(local_pinnacle_dir,str(mrn)+'Institution'),'r',errors='ignore') as inst_file_content:
+			for line in inst_file_content:
+				if 'PatientID =' in line:
+					new_pat_id = re.findall('[0-9]+',line)[0] #should be only one nr.
+					break #done, should be only 1
+		#loop over urls, update to new dbname and latest patnr
+		for url in urls:
+			new_url = re.sub('\[(.*)\]', '['+local_pinnacle_dbname+']', url,1) #replace pinnacle db name
+			new_url = re.sub('\_(.\d+)\.', '_'+new_pat_id+'.',new_url,1) #replace with correct patid
+			newurls.append(new_url+'\n')
+			if mrn not in url:
+				sys.stderr.write("mrn/upi mismatch: "+mrn+", "+upi+", "+url+"\n")
 
 with open(os.path.join(local_pinnacle_dir,'purls.txt'),'w') as purls:
-    purls.writelines(newurls) #doesnt do newlines
+	purls.writelines(newurls) #doesnt do newlines
 
 end_time = time.time()
 

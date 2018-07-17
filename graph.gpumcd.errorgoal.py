@@ -4,21 +4,21 @@ clrs=plot.colors
 
 f, ax1 = plot.subplots(nrows=1, ncols=1, sharex=False, sharey=False)
 
-x = range(1,120)
+x = range(1,125)
 
 def targeterr(cpi, prec):
     retval = prec
     if cpi>3:
         retval *= math.sqrt(float(cpi))/2.
-    if retval > 9.:
-        return 9.
+    if retval > 10.:
+        return 10.
     else:
         return retval
 
 
 ax1.set_title('GPUMCD Error Goal per Control Point')
-ax1.set_xlabel('# Control Points')
-ax1.set_ylabel('Target Error [%]')
+ax1.set_xlabel('# CPs')
+ax1.set_ylabel('Target Error / CP [%]')
 ax1.plot(x, [math.sqrt(i) for i in x],'-',color=clrs[0],lw=0.3,label='Theory HP')
 ax1.plot(x, [targeterr(i,1.) for i in x],'-',color=clrs[0],lw=1,label='High Precision')
 ax1.plot(x, [1+math.sqrt(i) for i in x],'-',color=clrs[1],lw=0.3,label='Theory NP')
