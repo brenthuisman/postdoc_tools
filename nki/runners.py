@@ -69,14 +69,7 @@ def comparedose(casedir,*args,**kwargs):
 	result = execute_getoutput(paths.dosecompare,arrgs).decode('utf-8').strip()
 	print(result)
 	
-	if len(args)==0:
-		#write results to casedir
-		with open(path.join(casedir,'gammaresult.txt'),'w') as resultfile:
-			resultfile.writelines(result)
-		if "files" in kwargs:
-		 	result = "files="+dose1+" "+result
-	elif "files" in kwargs:
-		result = "files="+dose1+";"+dose2+" "+result
+	result = "files="+dose1+";"+dose2+" "+result
 	
 	return result
 

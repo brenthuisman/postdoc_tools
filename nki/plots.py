@@ -1,34 +1,20 @@
 import collections,image,seaborn as sns,pandas as pd
 
-#TODO REPLACE
-def boxplot_gamma2(results,fname,showoutliers=False,flat=False):
-	if not isinstance(results, list):
-		print("Boxplots for a single point is a bit strange, but since I am both omnipotent and good humoured, I shall do as you please.")
-		results = [results]
-
-	data = collections.defaultdict(list)
+def gamma2dataframe(results):
+	# example results output: Studieset=CaseX Files=1.xdr;2.xdr Mean=0.01 ppc<1=100.00 p99=0.15 p95=0.07 Max=0.43 Min=0.00
+	columns = ["Studieset","Files","Mean γ","γ passrate","γ99","γ95","Max γ","Min γ"]
+	# columns = ["Studieset","Mean G","G passrate","G99","G95","Max dose","Min dose"]
+	data = []
 	for line in results:
+		row=[]
 		for item in line.split():
-			data[item.split('=')[0]].append(float(item.split('=')[-1]))
+			try:
+				row.append(float(item.split('=')[-1]))
+			except ValueError:
+				row.append(item.split('=')[-1])
+		data.append(row)
 
-	if flat:
-		f, ax1 = plot.subplots(nrows=1, ncols=1, sharex=False, sharey=False)
-		ax1.boxplot( data.values() , labels=data.keys() , showfliers=showoutliers,  showmeans=True, meanline = True )
-		ax1.set_yscale('log')
-	else:
-		f, axes = plot.subplots(nrows=2, ncols=3, sharex=False, sharey=False)
-		for index,(dat,val) in enumerate(zip(data.values(),data.keys())):
-			axes[ index//3 , index%3 ].boxplot( dat , showfliers=showoutliers)#, showmeans=True)#, meanline = True )
-			axes[ index//3 , index%3 ].set_title(val)
-			#axes[ index//3 , index%3 ].set_yscale('log')
-
-	f.savefig(fname+'.pdf', bbox_inches='tight')
-	f.savefig(fname+'.png', bbox_inches='tight',dpi=300)
-	plot.close('all')
-
-	with open(fname+'.txt','w') as resultfile:
-		# resultfile.writelines([i+': '+j for i,j in zip(cases,results_pinpin)])
-		resultfile.writelines([l+'\n' for l in results])
+	return pd.DataFrame(data = data,columns = columns)
 
 def boxplot_gamma(df,fname):
 	assert( isinstance(df, pd.DataFrame) )

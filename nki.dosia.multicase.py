@@ -8,6 +8,7 @@ args = parser.parse_args()
 
 pindumpdir = args.pindumpdir
 update = args.update
+fname = args.pindumpdir+"gammaresults"
 
 res=[]
 cases = [x for x in glob.glob(os.path.join(pindumpdir,"*/")) if not os.path.dirname(x).split(os.sep)[-1].startswith('__')]
@@ -22,7 +23,8 @@ for casedir in cases:
 		print (casedir)
 		print ("================= ========== ==================")
 
-plots.boxplot_gamma(res,os.path.join(pindumpdir,'gammaresults'))
 
-with open(os.path.join(pindumpdir,'gammaresults.txt'),'w') as resultfile:
-	resultfile.writelines([i+': '+j for i,j in zip(cases,res)])
+df = plots.gamma2dataframe(res)
+df.to_csv(fname+".csv")
+
+plots.boxplot_gamma(df,fname)

@@ -78,20 +78,21 @@ if not path.isfile(fname+".csv") or args.update:
 		results.append( "Studyset=MonDosia "+runners.comparedose(case.dosia_gpumcd,case.dicom_mon,files=True) )
 		results.append( "Studyset=Dosia "+runners.comparedose(case.dosia_pin,case.dosia_gpumcd,files=True) )
 
-	# ex output: Mean=0.01 ppc<1=100.00 p99=0.15 p95=0.07 Max=0.43 Min=0.00
-	columns = ["Studieset","Files","Mean γ","γ passrate","γ99","γ95","Max γ","Min γ"]
-	# columns = ["Studieset","Mean G","G passrate","G99","G95","Max dose","Min dose"]
-	data = []
-	for line in results:
-		row=[]
-		for item in line.split():
-			try:
-				row.append(float(item.split('=')[-1]))
-			except ValueError:
-				row.append(item.split('=')[-1])
-		data.append(row)
+	df = plots.gamma2dataframe(results)
+	# # ex output: Mean=0.01 ppc<1=100.00 p99=0.15 p95=0.07 Max=0.43 Min=0.00
+	# columns = ["Studieset","Files","Mean γ","γ passrate","γ99","γ95","Max γ","Min γ"]
+	# # columns = ["Studieset","Mean G","G passrate","G99","G95","Max dose","Min dose"]
+	# data = []
+	# for line in results:
+	# 	row=[]
+	# 	for item in line.split():
+	# 		try:
+	# 			row.append(float(item.split('=')[-1]))
+	# 		except ValueError:
+	# 			row.append(item.split('=')[-1])
+	# 	data.append(row)
 
-	df = pd.DataFrame(data = data,columns = columns)
+	# df = pd.DataFrame(data = data,columns = columns)
 	df.to_csv(fname+".csv")
 
 df = pd.read_csv(fname+".csv",index_col=0)
