@@ -2,17 +2,19 @@ from dataclasses import dataclass
 from os import path
 from nki import runners,plots
 import argparse,pandas as pd
+import datetime
 
 parser = argparse.ArgumentParser(description='secret')
-# parser.add_argument('pindumpdir')
-parser.add_argument('--update',action='store_true') #currently does not regeneate setongrids or doses
+# parser.add_argument('casedir')
+parser.add_argument('--studyname',default="")
+parser.add_argument('--noupdate',action='store_true') #currently does not regeneate setongrids or doses
 args = parser.parse_args()
 
 # sp = r"Z:\brent\stijn\pindump_noiav"
-sp = r"Z:\brent\stijn\pindump"
+sp = r"Z:\brent\stijn\pindump_withoverrides"
 sd = r"Z:\brent\stijn\dicom"
 plotoutput = r"Z:\brent\stijn"
-fname="gammaresults"
+fname="gammaresults"+args.studyname+datetime.datetime.now().strftime("_%Y%m%d_%H%M%S")
 
 # ZZIMRTe : F180307A
 # ZZIMRTt : F180307B
@@ -23,7 +25,7 @@ fname="gammaresults"
 
 fname = path.join(plotoutput,fname)
 
-if not path.isfile(fname+".csv") or args.update:
+if not args.noupdate:
 
 	@dataclass
 	class Case:
@@ -51,11 +53,6 @@ if not path.isfile(fname+".csv") or args.update:
 
 	results = []
 
-	# results_pinpin = []
-	# results_dicom = []
-	# results_mondosia = []
-	# results_dosia = []
-
 	for i,case in enumerate(cases):
 		if i == 2:
 			continue
@@ -68,39 +65,15 @@ if not path.isfile(fname+".csv") or args.update:
 		case.dosia_pin = runners.factor(case.dosia_pin,'divc','100')
 		case.dosia_gpumcd = runners.factor(case.dosia_gpumcd,'divc','100')
 
-		# results_pinpin.append( runners.comparedose(case.dicom_pin,case.dosia_pin) )
-		# results_dicom.append( runners.comparedose(case.dicom_pin,case.dicom_mon) )
-		# results_mondosia.append( runners.comparedose(case.dosia_gpumcd,case.dicom_mon) )
-		# results_dosia.append( runners.comparedose(case.dosia_pin,case.dosia_gpumcd) )
-
 		results.append( "Studyset=PinPin "+runners.comparedose(case.dicom_pin,case.dosia_pin,files=True) )
 		results.append( "Studyset=Dicom "+runners.comparedose(case.dicom_pin,case.dicom_mon,files=True) )
 		results.append( "Studyset=MonDosia "+runners.comparedose(case.dosia_gpumcd,case.dicom_mon,files=True) )
 		results.append( "Studyset=Dosia "+runners.comparedose(case.dosia_pin,case.dosia_gpumcd,files=True) )
 
-	df = plots.gamma2dataframe(results)
-	# # ex output: Mean=0.01 ppc<1=100.00 p99=0.15 p95=0.07 Max=0.43 Min=0.00
-	# columns = ["Studieset","Files","Mean γ","γ passrate","γ99","γ95","Max γ","Min γ"]
-	# # columns = ["Studieset","Mean G","G passrate","G99","G95","Max dose","Min dose"]
-	# data = []
-	# for line in results:
-	# 	row=[]
-	# 	for item in line.split():
-	# 		try:
-	# 			row.append(float(item.split('=')[-1]))
-	# 		except ValueError:
-	# 			row.append(item.split('=')[-1])
-	# 	data.append(row)
-
-	# df = pd.DataFrame(data = data,columns = columns)
+	df = plots.gamma2dataframe(results,["Studyset","Files","Mean γ","γ passrate","γ99","γ95","Max γ","Min γ"])
 	df.to_csv(fname+".csv")
-
-df = pd.read_csv(fname+".csv",index_col=0)
-
-# print(df)
+else:
+	last_fname = sorted( glob.glob(path.splitext(fname)[0].rstrip('1234567890_')+'*.csv') ,reverse=True)[0]
+	df = pd.read_csv(last_fname+".csv",index_col=0)
 
 plots.boxplot_gamma(df,fname)
-# plots.boxplot_gamma(results_pinpin,path.join(plotoutput,"results_pinpin"))
-# plots.boxplot_gamma(results_dicom,path.join(plotoutput,"results_dicom"))
-# plots.boxplot_gamma(results_mondosia,path.join(plotoutput,"results_mondosia"))
-# plots.boxplot_gamma(results_dosia,path.join(plotoutput,"results_dosia"))

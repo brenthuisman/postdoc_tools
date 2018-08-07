@@ -10,10 +10,12 @@ def execute_getoutput(exe_path,args):
 	assert path.isfile(exe_path)
 	return subprocess.check_output( exe_path+' '+args , cwd=path.dirname(exe_path) )
 
-def makedose(casedir,update=True): #update=false is NOT COMPUTING new dose
+def makedose(casedir,recalcdose=True): #update=false is NOT COMPUTING new dose
 	beamdirs = [path.split(i)[0] for i in glob.glob(path.join(casedir,"**","dbtype.dump"))]
 
-	if update:
+	print("recalcdose","=",recalcdose)
+
+	if recalcdose:
 		for beamdir in beamdirs:
 			arrgs = "-i "+beamdir
 			execute(paths.dosiaengine,arrgs)
@@ -32,19 +34,20 @@ def makedose(casedir,update=True): #update=false is NOT COMPUTING new dose
 	else:
 		tpsdosesum = path.join(casedir,'sum_dose.xdr')
 		gpumcddosesum = path.join(casedir,'sum_gpumcd_dose.xdr')
-		
+
 	for i,beamdir in enumerate(beamdirs):
 		args_tps=''
 		args_gpumcd=''
-		
-		if i == 0:
-			continue
-		if i == 1:
-			args_tps = arithm_tps(beamdirs[i-1],beamdirs[i],tpsdosesum)
-			args_gpumcd = arithm_gpumcd(beamdirs[i-1],beamdirs[i],gpumcddosesum)
-		
-		execute(paths.xdr_arithm,args_tps)
-		execute(paths.xdr_arithm,args_gpumcd)
+
+		if (not path.isfile(tpsdosesum) and not path.isfile(gpumcddosesum)) or recalcdose:
+			if i == 0:
+				continue
+			if i == 1:
+				args_tps = arithm_tps(beamdirs[i-1],beamdirs[i],tpsdosesum)
+				args_gpumcd = arithm_gpumcd(beamdirs[i-1],beamdirs[i],gpumcddosesum)
+
+			execute(paths.xdr_arithm,args_tps)
+			execute(paths.xdr_arithm,args_gpumcd)
 
 	return [tpsdosesum,gpumcddosesum,beamdirs]
 
@@ -61,16 +64,16 @@ def comparedose(casedir,*args,**kwargs):
 		assert path.isfile(casedir)
 		dose1 = casedir
 		dose2 = args[0]#secondfile
-		
+
 	assert path.isfile(dose1)
 	assert path.isfile(dose2)
-	
+
 	arrgs = "/dose1 "+dose1+" /dose2 "+dose2+" 2>&1"
 	result = execute_getoutput(paths.dosecompare,arrgs).decode('utf-8').strip()
 	print(result)
-	
+
 	result = "files="+dose1+";"+dose2+" "+result
-	
+
 	return result
 
 def setongrid(infile,asfile,overwrite=False):
