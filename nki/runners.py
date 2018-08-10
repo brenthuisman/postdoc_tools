@@ -14,6 +14,7 @@ def makedose(casedir,recalcdose=True): #update=false is NOT COMPUTING new dose
 	beamdirs = [path.split(i)[0] for i in glob.glob(path.join(casedir,"**","dbtype.dump"))]
 
 	print("recalcdose","=",recalcdose)
+	print("beamdirs","=",beamdirs)
 
 	if recalcdose:
 		for beamdir in beamdirs:
@@ -25,15 +26,14 @@ def makedose(casedir,recalcdose=True): #update=false is NOT COMPUTING new dose
 	def arithm_gpumcd(in1,in2,out):
 		return '/operation add /dose1 "'+path.join(in1,'gpumcd_dose.xdr')+'" /dose2 "'+path.join(in2,'gpumcd_dose.xdr')+'" /outdose "'+out+'"'
 
-	tpsdosesum=''
-	gpumcddosesum=''
+	tpsdosesum = path.join(casedir,'sum_dose.xdr')
+	gpumcddosesum = path.join(casedir,'sum_gpumcd_dose.xdr')
 
-	if len(beamdirs) == 1:
-		tpsdosesum = path.join(beamdirs[0],'sum_dose.xdr')
-		gpumcddosesum = path.join(beamdirs[0],'sum_gpumcd_dose.xdr')
-	else:
-		tpsdosesum = path.join(casedir,'sum_dose.xdr')
-		gpumcddosesum = path.join(casedir,'sum_gpumcd_dose.xdr')
+	if len(beamdirs) == 1:#todo remove
+		from shutil import copyfile
+		copyfile(path.join(beamdirs[0],'dose.xdr'),tpsdosesum)
+		copyfile(path.join(beamdirs[0],'gpumcd_dose.xdr'),gpumcddosesum)
+		return  [tpsdosesum,gpumcddosesum,beamdirs]
 
 	for i,beamdir in enumerate(beamdirs):
 		args_tps=''

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from os import path
 from nki import runners,plots
 import argparse,pandas as pd
-import datetime
+import datetime,glob
 
 parser = argparse.ArgumentParser(description='secret')
 # parser.add_argument('casedir')
@@ -56,10 +56,10 @@ if not args.noupdate:
 	for i,case in enumerate(cases):
 		if i == 2:
 			continue
-		if i == 3:
-			continue
-		if i == 5:
-			continue
+		# if i == 3:
+		# 	continue
+		# if i == 5:
+		# 	continue
 		case.dicom_pin = runners.setongrid(case.dicom_pin,case.dosia_pin)
 		case.dicom_mon = runners.setongrid(case.dicom_mon,case.dosia_pin)
 		case.dosia_pin = runners.factor(case.dosia_pin,'divc','100')
