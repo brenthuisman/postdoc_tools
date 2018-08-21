@@ -11,13 +11,13 @@ args = parser.parse_args()
 indir = args.indir[0].rstrip('/')
 
 outname = 'epid_plot.pdf'
-imyields = glob.glob(indir+"/**/epiddose-trans-Dose.mhd")+glob.glob(indir+"/**/epiddose-nontrans-Dose.mhd")+glob.glob(indir+"/**/epiddose-Dose.mhd")
-imuncs = glob.glob(indir+"/**/epiddose-trans-Dose-Uncertainty.mhd")+glob.glob(indir+"/**/epiddose-nontrans-Dose-Uncertainty.mhd")+glob.glob(indir+"/**/epiddose-Dose-Uncertainty.mhd")
+imyields = glob.glob(indir+"/**/epiddose-trans-Dose.mhd", recursive=True)+glob.glob(indir+"/**/epiddose-nontrans-Dose.mhd", recursive=True)+glob.glob(indir+"/**/epiddose-Dose.mhd", recursive=True)
+imuncs = glob.glob(indir+"/**/epiddose-trans-Dose-Uncertainty.mhd", recursive=True)+glob.glob(indir+"/**/epiddose-nontrans-Dose-Uncertainty.mhd", recursive=True)+glob.glob(indir+"/**/epiddose-Dose-Uncertainty.mhd", recursive=True)
 
 if args.tle:
     outname = 'epid_tle_plot.pdf'
-    imyields = glob.glob(indir+"/**/epiddose-trans-tle-Dose.mhd")+glob.glob(indir+"/**/epiddose-nontrans-tle-Dose.mhd")+glob.glob(indir+"/**/epiddose-tle-Dose.mhd")
-    imuncs = glob.glob(indir+"/**/epiddose-trans-tle-Dose-Uncertainty.mhd")+glob.glob(indir+"/**/epiddose-nontrans-tle-Dose-Uncertainty.mhd")+glob.glob(indir+"/**/epiddose-tle-Dose-Uncertainty.mhd")
+    imyields = glob.glob(indir+"/**/epiddose-trans-tle-Dose.mhd", recursive=True)+glob.glob(indir+"/**/epiddose-nontrans-tle-Dose.mhd", recursive=True)+glob.glob(indir+"/**/epiddose-tle-Dose.mhd", recursive=True)
+    imuncs = glob.glob(indir+"/**/epiddose-trans-tle-Dose-Uncertainty.mhd", recursive=True)+glob.glob(indir+"/**/epiddose-nontrans-tle-Dose-Uncertainty.mhd")+glob.glob(indir+"/**/epiddose-tle-Dose-Uncertainty.mhd", recursive=True)
 
 print(imyields)
 
@@ -38,7 +38,7 @@ for axrow,yim,uim,label in zip(axes,imyields,imuncs,labels):
     fracties_totaal.append( yim_.imdata.sum() )
     axrow[0].imshow( yim_.imdata.squeeze() , extent = [0,41,0,41], cmap='gray')
     axrow[0].set_title(label + '\n$\sum$ Dose: '+ plot.sn(fracties_totaal[-1]))
-    
+
     axrow[1].set_title(label + ' Profile')
     axrow[1].plot(*yim_.getprofile('y'), color = 'steelblue' , label='x')
     axrow[1].plot(*yim_.getprofile('x'), color = 'indianred' , label='y')
@@ -47,10 +47,10 @@ for axrow,yim,uim,label in zip(axes,imyields,imuncs,labels):
     axrow[1].axvline(41./2.+8., color='#999999', ls='--')
     axrow[1].set_xlim(0,41)
     plot.set_metric_prefix_y(axrow[1])
-    
+
     axrow[2].set_title(label+' relunc')
     plot.plot1dhist( axrow[2], uim_.imdata.flatten(), bins=np.linspace(0,100,50), log=True)
-   
+
 frac_trans=1.
 frac_nontrans=1.
 if args.phosphor:
@@ -63,7 +63,7 @@ sumim = image.image(imyields[0],type='yield')
 sumim.imdata=sumim.imdata.squeeze()*frac_nontrans+image.image(imyields[1],type='yield').imdata.squeeze()*frac_trans
 axes[-1][0].imshow( sumim.imdata , extent = [0,41,0,41], cmap='gray')
 axes[-1][0].set_title('Sum' + '\n$\sum$ Dose: '+ plot.sn(sumim.imdata.sum()))
-   
+
 axes[-1][1].set_title('Sum Profile')
 axes[-1][1].plot(*sumim.getprofile('y'), color = 'steelblue' , label='x')
 axes[-1][1].plot(*sumim.getprofile('x'), color = 'indianred' , label='y')

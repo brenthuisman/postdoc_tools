@@ -13,8 +13,8 @@ showoutliers = False
 
 #######################################
 
-pinim = sorted(glob.glob(local_dose_dir+"/*pin.xdr"))
-monim = sorted(glob.glob(local_dose_dir+"/*mon.xdr"))
+pinim = sorted(glob.glob(local_dose_dir+"/*pin.xdr"), recursive=True)
+monim = sorted(glob.glob(local_dose_dir+"/*mon.xdr"), recursive=True)
 
 results=[]
 
@@ -29,8 +29,8 @@ else:
         result = subprocess.check_output(cmd).decode('utf-8').strip()
         print(result)
         results.append(result+'\n')
-        
-        
+
+
     with open(os.path.join(local_dose_dir,'gammaresults.txt'),'w') as resultfile:
         resultfile.writelines(results)
 

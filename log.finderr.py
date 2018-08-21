@@ -7,8 +7,8 @@ Checks for gatejobs files that miss an output dir.
 import sys,os,re
 from collections import Counter as cntr
 
-gatelogs = glob.glob("./**/gatejob.*")
-outdirs = glob.glob("./**/output.*")
+gatelogs = glob.glob("./**/gatejob.*", recursive=True)
+outdirs = glob.glob("./**/output.*", recursive=True)
 w = '((?<!libg4)error|terminated|warning|PBS:|exceeded limit)' #dont match libG4error
 
 print(len(gatelogs), "gatelogs found.", len(outdirs), "output dirs found.")

@@ -1,44 +1,65 @@
 #!/usr/bin/env python3
-import numpy as np,sys,image,seaborn as sns,plot,argparse,pandas as pd
+import numpy as np,sys,image,seaborn as sns,plot,argparse,glob,pandas as pd
 from os import path
+from nki import plots
 # from nki import runners
 
-imagefiles = [r"Z:\brent\stijn\pindump_nooverrides\MonacoPhantom\A.trialname.1.beam\dose.mhd",r"Z:\brent\stijn\pindump_nooverrides\MonacoPhantom\A.trialname.1.beam\gpumcd_dose.mhd"]
+# imagefiles = [r"Z:\brent\stijn\pindump_nooverrides\MonacoPhantom\A.trialname.1.beam\dose.mhd",r"Z:\brent\stijn\pindump_nooverrides\MonacoPhantom\A.trialname.1.beam\gpumcd_dose.mhd"]
 
-# parser = argparse.ArgumentParser(description='specify mulitple mhd images to analyse')
-# parser.add_argument('-i', '--image',action='append')
-# args = parser.parse_args()
-# imagefiles = args.image
+parser = argparse.ArgumentParser(description='specify mulitple mhd images to analyse')
+parser.add_argument('--dir',default="")
+parser.add_argument('--noupdate',action='store_true')
+opt = parser.parse_args()
 
-fname = path.join(path.dirname(imagefiles[0]),'profile_plot')
-images = [image.image(i) for i in imagefiles]
+fname = path.join(opt.dir,'profile_plot')
+setnames = ["2cm","3cm","4cm","5cm","6cm","8cm","10cm","15cm","20cm","23cm"]
 
-f, ((ax1,ax2),(ax3,ax4)) = plot.subplots(nrows=2, ncols=2, sharex=False, sharey=False)
-sns.set_style("whitegrid")
+if not opt.noupdate:
+    ## lets make csv
+    imagefiles = glob.glob(path.join(opt.dir,"**","*dose.mhd"), recursive=True)
+    assert(len(setnames)*2==len(imagefiles))
+    images = [image.image(i) for i in imagefiles]
 
-for im in images:
+    listoframes=[]
+    for i,setname in enumerate(setnames):
+        pin_im = image.image( imagefiles[int(2*i)] )
+        gpumcd_im = image.image( imagefiles[int(2*i+1)] )
 
-    sns.lineplot( ax=ax1, y=im.getline('y'), x=im.get_axis_mms('y') ) # PDD == y
-    pdd_max = im.getline('y').argmax()
-    print('brent',pdd_max)
-    sns.lineplot( ax=ax2, y=im.getline_atindex('x',pdd_max), x=im.get_axis_mms('x' ))
-    sns.lineplot( ax=ax3, y=im.getline_atindex('z',pdd_max), x=im.get_axis_mms('z') )
+        x_x = pin_im.get_axis_mms('x') #same for all
+        x_y = pin_im.get_axis_mms('y') #same for all
+        x_z = pin_im.get_axis_mms('z') #same for all
 
-reldiff = ( images[1].getline_atindex('x',pdd_max) - images[0].getline_atindex('x',pdd_max) ) / images[1].getline_atindex('x',pdd_max)
-sns.lineplot( ax=ax4, y=reldiff, x=im.get_axis_mms('x') )
-ax4.fill_between( images[1].get_axis_mms('x'), -0.01, 0.01, alpha=0.3)
-ax2.set_xlim(-70,70)
-ax3.set_xlim(-70,70)
-ax4.set_xlim(-70,70)
-ax4.set_ylim(-0.05,0.2)
+        pdd_max = pin_im.getline('y').argmax()
 
-ax1.set_title("X")
-ax2.set_title("Y")
-ax3.set_title("Z")
-ax4.set_title("reldiff Y")
+        py_x = pin_im.getline_atindex('x',pdd_max)
+        py_y = pin_im.getline('y')
+        py_z = pin_im.getline_atindex('z',pdd_max)
+        gy_x = gpumcd_im.getline_atindex('x',pdd_max)
+        gy_y = gpumcd_im.getline('y')
+        gy_z = gpumcd_im.getline_atindex('z',pdd_max)
 
-f.savefig(fname+'.pdf', bbox_inches='tight')
-f.savefig(fname+'.png', bbox_inches='tight',dpi=300)
+        y_xrel = ( gy_x - py_x ) / py_x
+
+        columntitles = ["Setname","Generator","Axis",'Distance to isoc [mm]','Dose [cGy]']
+        listoframes.append( plots.cols2dataframe(columntitles,x_x,py_x,metadata=[setname,'pinnacle','X']) )
+        listoframes.append( plots.cols2dataframe(columntitles,x_y,py_y,metadata=[setname,'pinnacle','Y']) )
+        listoframes.append( plots.cols2dataframe(columntitles,x_z,py_z,metadata=[setname,'pinnacle','Z']) )
+        listoframes.append( plots.cols2dataframe(columntitles,x_x,gy_x,metadata=[setname,'gpumcd','X']) )
+        listoframes.append( plots.cols2dataframe(columntitles,x_y,gy_y,metadata=[setname,'gpumcd','Y']) )
+        listoframes.append( plots.cols2dataframe(columntitles,x_z,gy_z,metadata=[setname,'gpumcd','Z']) )
+        listoframes.append( plots.cols2dataframe(columntitles,x_x,y_xrel,metadata=[setname,'reldiff','relY']) )
+
+        # columntitles = ["x_x","x_y","x_z","py_x","py_y","py_z","gy_x","gy_y","gy_z","y_xrel"]
+        # listoframes.append( plots.cols2dataframe(columntitles,setnames,x_x,x_y,x_z,py_x,py_y,py_z,gy_x,gy_y,gy_z,y_xrel) )
+
+    df = pd.concat(listoframes)
+    df.to_csv(fname+".csv")
+    # print(df)
+
+## lets plot csv
+df = pd.read_csv(fname+".csv",index_col=0)
+
+plots.fieldseries(df,fname)
 
 # Finish: stijns profielen
 # runners.execute(r"D:\postdoc\code\xdr_xdr2mhd\src\Win32\Debug\xdr_xdr2mhd.exe","/in blabla.xdr")

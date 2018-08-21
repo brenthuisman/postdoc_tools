@@ -9,8 +9,8 @@ rundir = args.rundir.rstrip('/')
 
 print(rundir)
 
-doseims = glob.glob(rundir+"/**/dose-Dose.mhd")
-fluenceims = glob.glob(rundir+"/**/fluence.mhd")
+doseims = glob.glob(rundir+"/**/dose-Dose.mhd", recursive=True)
+fluenceims = glob.glob(rundir+"/**/fluence.mhd", recursive=True)
 
 pixels_lowdose = []
 pixels_highdose = []
@@ -30,26 +30,26 @@ for d,f in zip(doseims,fluenceims):
 	#print (d,f)
 	dim = image.image(d)
 	fim = image.image(f)
-	
+
 	f_voxels += fim.imdata.astype('float').flatten().tolist()
 	d_voxels += dim.imdata.astype('float').flatten().tolist()
-	
+
 	relim = (dim.imdata.astype('float')/fim.imdata.astype('float')).squeeze()
-	
+
 	relim.squeeze()
 	relim_highdoseregion=np.copy(relim[fielsize_start:fielsize_end,fielsize_start:fielsize_end])
 	relim[fielsize_start:fielsize_end,fielsize_start:fielsize_end]=np.nan
 	relim_lowdoseregion = relim[~np.isnan(relim)]
-	
+
 	#print(relim.shape)
 	#print(relim_highdoseregion.shape)
 	#print('Nr of :',np.sum(np.isnan(relim_lowdoseregion)==True))
 	#print('Nr of :',np.sum(np.isnan(relim_highdoseregion)==True))
 	#quit()
-	
+
 	pixels_lowdose += relim_lowdoseregion.flatten().tolist()
 	pixels_highdose += relim_highdoseregion.flatten().tolist()
-	
+
 assert(len(f_voxels)==len(d_voxels))
 ratios = np.array(d_voxels)/np.array(f_voxels)
 ratios = ratios[ratios != 0]
