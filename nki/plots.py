@@ -58,7 +58,12 @@ def fieldseries(df,fname):
 	sns.set_style(style="whitegrid")
 	f, ((ax1,ax2),(ax3,ax4)) = plot.subplots(nrows=2, ncols=2, sharex=False, sharey=False)
 
-	sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='X' and Generator=='gpumcd'"), ax=ax1, lw=1)#, linestyle='dashed')
+	# sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='X' and Generator=='gpumcd'"), ax=ax1, lw=1)#, linestyle='dashed')
+	# sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='Y' and Generator=='gpumcd'"), ax=ax2, lw=1)
+	# #sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='relY'"), ax=ax3, lw=1)
+	# sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='Z' and Generator=='gpumcd'"), ax=ax4, lw=1)
+
+	sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='X'"), style="Generator", ax=ax1, lw=1)#, linestyle='dashed')
 	sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='Y' and Generator=='gpumcd'"), ax=ax2, lw=1)
 	#sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='relY'"), ax=ax3, lw=1)
 	sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='Z' and Generator=='gpumcd'"), ax=ax4, lw=1)
@@ -67,10 +72,10 @@ def fieldseries(df,fname):
 		for line in ax.get_lines():
 			line.set_dashes([2, 2])
 
-	sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='X' and Generator=='pinnacle'"), ax=ax1, lw=1)#, linestyle='dashed')
-	sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='Y' and Generator=='pinnacle'"), ax=ax2, lw=1)
-	sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='relY' and (Setname=='10cm' or Setname=='15cm')"), ax=ax3, lw=1)
-	sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='Z' and Generator=='pinnacle'"), ax=ax4, lw=1)
+	# sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='X' and Generator=='pinnacle'"), ax=ax1, lw=1)#, linestyle='dashed')
+	# sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='Y' and Generator=='pinnacle'"), ax=ax2, lw=1)
+	# sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='relY' and (Setname=='10cm' or Setname=='15cm')"), ax=ax3, lw=1)
+	# sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='Z' and Generator=='pinnacle'"), ax=ax4, lw=1)
 
 	ax1.set_xlim(-70,70)
 	# ax2.set_xlim(-70,70)
