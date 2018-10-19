@@ -10,11 +10,11 @@ parser.add_argument('--studyname',default="")
 parser.add_argument('--noupdate',action='store_true') #currently does not regeneate setongrids or doses
 args = parser.parse_args()
 
-# sp = r"Z:\brent\stijn\pindump_noiav"
-sp = r"Z:\brent\stijn\pindump_withoverrides"
+# sp = r"Z:\brent\stijn\pindump_withoverrides"
+sp = r"Z:\brent\stijn\pindump_nooverrides"
 sd = r"Z:\brent\stijn\dicom"
 plotoutput = r"Z:\brent\stijn"
-fname="gammaresults"+args.studyname+datetime.datetime.now().strftime("_%Y%m%d_%H%M%S")
+fname="6case_gammaresults"+args.studyname+datetime.datetime.now().strftime("_%Y%m%d_%H%M%S")
 
 # ZZIMRTe : F180307A
 # ZZIMRTt : F180307B
@@ -54,16 +54,16 @@ if not args.noupdate:
 	results = []
 
 	for i,case in enumerate(cases):
-		if i == 2:
-			continue
+		# if i == 2:
+		# 	continue
 		# if i == 3:
 		# 	continue
 		# if i == 5:
 		# 	continue
-		case.dicom_pin = runners.setongrid(case.dicom_pin,case.dosia_pin)
+		case.dicom_pin = runners.setongrid(case.dicom_pin,case.dosia_pin,)
 		case.dicom_mon = runners.setongrid(case.dicom_mon,case.dosia_pin)
-		case.dosia_pin = runners.factor(case.dosia_pin,'divc','100')
-		case.dosia_gpumcd = runners.factor(case.dosia_gpumcd,'divc','100')
+		case.dosia_pin = runners.factor(case.dosia_pin,'divc','100')#,True)
+		case.dosia_gpumcd = runners.factor(case.dosia_gpumcd,'divc','100')#,True)
 
 		results.append( "Studyset=PinPin "+runners.comparedose(case.dicom_pin,case.dosia_pin,files=True) )
 		results.append( "Studyset=Dicom "+runners.comparedose(case.dicom_pin,case.dicom_mon,files=True) )

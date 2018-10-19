@@ -1,6 +1,11 @@
 import glob,subprocess
 from os import path
-from nki import paths
+
+dosiaengine = r"D:\postdoc\code\DosiaEngine\x64\Release\DosiaEngine.exe"
+xdr_arithm = r"D:\postdoc\code\xdr_arithm\src\Win32\Debug\xdr_arithm.exe"
+dosecompare = r"D:\postdoc\code\DoseCompareCmdline\src\Win32\Debug\dosecompare_cmd.exe"
+xdr_cropas = r"D:\postdoc\code\xdr_cropas\src\Win32\Debug\xdr_cropas.exe"
+xdr_setongrid = r"D:\postdoc\code\xdr_setongrid\src\Win32\Debug\xdr_setongrid.exe"
 
 def execute(exe_path,args):
 	assert path.isfile(exe_path)
@@ -16,10 +21,10 @@ def makedose(casedir,recalcdose=True,sumdoses=True):
 	print("recalcdose","=",recalcdose)
 	print("beamdirs","=",beamdirs)
 
-	if recalcdose:
+	if recalcdose or not path.isfile(path.join(beamdirs[0],"gpumcd_dose.xdr")):
 		for beamdir in beamdirs:
 			arrgs = "-i "+beamdir
-			execute(paths.dosiaengine,arrgs)
+			execute(dosiaengine,arrgs)
 
 	def arithm_tps(in1,in2,out):
 		return '/operation add /dose1 "'+path.join(in1,'dose.xdr')+'" /dose2 "'+path.join(in2,'dose.xdr')+'" /outdose "'+out+'"'
@@ -47,8 +52,8 @@ def makedose(casedir,recalcdose=True,sumdoses=True):
 					args_tps = arithm_tps(beamdirs[i-1],beamdirs[i],tpsdosesum)
 					args_gpumcd = arithm_gpumcd(beamdirs[i-1],beamdirs[i],gpumcddosesum)
 
-				execute(paths.xdr_arithm,args_tps)
-				execute(paths.xdr_arithm,args_gpumcd)
+				execute(xdr_arithm,args_tps)
+				execute(xdr_arithm,args_gpumcd)
 
 	return [tpsdosesum,gpumcddosesum,beamdirs]
 
@@ -70,7 +75,7 @@ def comparedose(casedir,*args,**kwargs):
 	assert path.isfile(dose2)
 
 	arrgs = "/dose1 "+dose1+" /dose2 "+dose2+" 2>&1"
-	result = execute_getoutput(paths.dosecompare,arrgs).decode('utf-8').strip()
+	result = execute_getoutput(dosecompare,arrgs).decode('utf-8').strip()
 	print(result)
 
 	result = "files="+dose1+";"+dose2+" "+result
@@ -84,7 +89,7 @@ def setongrid(infile,asfile,overwrite=False):
 
 	if not path.isfile(outfile) or overwrite:
 		arrgs = "/in "+infile+" /as "+asfile+" /out "+outfile+" 2>&1"
-		execute(paths.xdr_setongrid,arrgs)
+		execute(xdr_setongrid,arrgs)
 		print(outfile)
 
 	return outfile
@@ -94,6 +99,6 @@ def factor(infile,operation,factor,overwrite=False):
 
 	if not path.isfile(outfile) or overwrite:
 		arrgs =  '/dose1 "'+infile+'" /operation '+operation+' /factor '+factor+' /outdose "'+outfile+'"'
-		execute(paths.xdr_arithm,arrgs)
+		execute(xdr_arithm,arrgs)
 
 	return outfile

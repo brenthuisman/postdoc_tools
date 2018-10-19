@@ -1,5 +1,5 @@
 import sys,os,glob,argparse
-from nki import paths,runners,plots
+from nki import runners,plots
 import datetime
 
 parser = argparse.ArgumentParser()
