@@ -36,37 +36,36 @@ if not opt.noupdate:
     for i,setname in enumerate(setnames):
         pin_im = image.image( imagefiles[int(2*i)] )
         gpumcd_im = image.image( imagefiles[int(2*i+1)] )
+        print ('loading',imagefiles[int(2*i)],setname)
+        # print('pixelsize',pin_im.header['DimSize'])
+        # shift_half_pixel = False
+        # print ('x',pin_im.get_axis_mms('x',shift_half_pixel)[0]," ",pin_im.get_axis_mms('x',shift_half_pixel)[-1])
+        # print ('y',pin_im.get_axis_mms('y',shift_half_pixel)[0]," ",pin_im.get_axis_mms('y',shift_half_pixel)[-1])
+        # print ('z',pin_im.get_axis_mms('z',shift_half_pixel)[0]," ",pin_im.get_axis_mms('z',shift_half_pixel)[-1])
 
-        x_x = pin_im.get_axis_mms('x')
-        x_y = pin_im.get_axis_mms('y')
-        x_z = pin_im.get_axis_mms('z')
+        # print(pin_im.header['Offset'][1],pin_im.header['ElementSpacing'][1],pin_im.header['DimSize'][1])
 
-        isoc_index = pin_im.coord2index([i*10 for i in isoc])
-        print ("isoc_index",isoc_index)
-        print ("isoc_vals",pin_im.imdata[isoc_index[0]][isoc_index[1]][isoc_index[2]])
+
+        # print(-344+270-2)
+        # print(len(pin_im.get_axis_mms('y'))*2)
         # quit()
 
-        # isoc_index[1] = im.getline('y').argmax()
-        # if glob_y_x is None:
-        #     isoc_index[1] = pin_im.get1dlist([1,0,1]).argmax()
-        #     isoc_index[0] = pin_im.get1dlist([1,1,0]).argmax() #x,z indices swapped!!!
-        #     isoc_index[2] = pin_im.get1dlist([0,1,1]).argmax()
+        isoc_index = pin_im.coord2index([i*10 for i in isoc],True) #mm to cm
+        print ("isoc_index",isoc_index)
+        isoc_index = [88, 83, 68]
+        isoc = [2./10., -169./10., 3./10.]
+        # echte index is [88, 83, 68], uitgaande van 10cm diep (wat voor EPID calib veldserie metingen altijd zo is)
 
-        #     print("midden van PDD max:",imagefiles[i],isoc_index[0],isoc_index[1],isoc_index[2])
+        x_x = [x-isoc[0]*10 for x in pin_im.get_axis_mms('x')]
+        x_y = [x-isoc[1]*10 for x in pin_im.get_axis_mms('y')]
+        x_z = [x-isoc[2]*10 for x in pin_im.get_axis_mms('z')]
 
-        # py_x = pin_im.getline_atindex('x',isoc_index[1],isoc_index[2])
-        # py_y = pin_im.getline_atindex('y',isoc_index[0],isoc_index[2])
-        # py_z = pin_im.getline_atindex('z',isoc_index[0],isoc_index[1])
-        # gy_x = gpumcd_im.getline_atindex('x',isoc_index[1],isoc_index[2])
-        # gy_y = gpumcd_im.getline_atindex('y',isoc_index[0],isoc_index[2])
-        # gy_z = gpumcd_im.getline_atindex('z',isoc_index[0],isoc_index[1])
-
-        py_x = pin_im.getline_atindex('z',isoc_index[1],isoc_index[0])
+        py_x = pin_im.getline_atindex('x',isoc_index[1],isoc_index[0])
         py_y = pin_im.getline_atindex('y',isoc_index[2],isoc_index[0])
-        py_z = pin_im.getline_atindex('x',isoc_index[2],isoc_index[1])
-        gy_x = gpumcd_im.getline_atindex('z',isoc_index[1],isoc_index[0])
+        py_z = pin_im.getline_atindex('z',isoc_index[2],isoc_index[1])
+        gy_x = gpumcd_im.getline_atindex('x',isoc_index[1],isoc_index[0])
         gy_y = gpumcd_im.getline_atindex('y',isoc_index[2],isoc_index[0])
-        gy_z = gpumcd_im.getline_atindex('x',isoc_index[2],isoc_index[1])
+        gy_z = gpumcd_im.getline_atindex('z',isoc_index[2],isoc_index[1])
 
         y_xrel = ( gy_x - py_x ) / py_x
         y_xrat = gy_x / py_x
