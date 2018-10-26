@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import image,sys,numpy
-from image import xdr
 
 im = image.image(r"Z:\brent\fieldseries\F180813B\6MV.trialname.4.beam\dose.xdr")
 # print(im.imdata.dtype.char)
