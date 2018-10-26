@@ -2,10 +2,8 @@
 import image,sys,numpy
 
 im = image.image(r"Z:\brent\fieldseries\F180813B\6MV.trialname.4.beam\dose.xdr")
-# print(im.imdata.dtype.char)
-# print(im.imdata.dtype)
-# print(im.imdata.dtype.byteorder) #will say system native before saying BE/LE.
-# print(im.imdata.dtype.itemsize)
+
+# print (im.getsum())
 
 im.saveas('testxdr.mhd')
 

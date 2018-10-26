@@ -50,22 +50,23 @@ if not opt.noupdate:
         # print(len(pin_im.get_axis_mms('y'))*2)
         # quit()
 
-        isoc_index = pin_im.coord2index([i*10 for i in isoc],True) #mm to cm
+        isoc_index = pin_im.get_pixel([i*10 for i in isoc],True) #mm to cm
         print ("isoc_index",isoc_index)
         isoc_index = [88, 83, 68]
         isoc = [2./10., -169./10., 3./10.]
         # echte index is [88, 83, 68], uitgaande van 10cm diep (wat voor EPID calib veldserie metingen altijd zo is)
 
-        x_x = [x-isoc[0]*10 for x in pin_im.get_axis_mms('x')]
-        x_y = [x-isoc[1]*10 for x in pin_im.get_axis_mms('y')]
-        x_z = [x-isoc[2]*10 for x in pin_im.get_axis_mms('z')]
+        x_x,x_y,x_z = pin_im.get_axes()
+        x_x = [x-isoc[0]*10 for x in x_x]
+        x_y = [x-isoc[1]*10 for x in x_y]
+        x_z = [x-isoc[2]*10 for x in x_z]
 
-        py_x = pin_im.getline_atindex('x',isoc_index[1],isoc_index[0])
-        py_y = pin_im.getline_atindex('y',isoc_index[2],isoc_index[0])
-        py_z = pin_im.getline_atindex('z',isoc_index[2],isoc_index[1])
-        gy_x = gpumcd_im.getline_atindex('x',isoc_index[1],isoc_index[0])
-        gy_y = gpumcd_im.getline_atindex('y',isoc_index[2],isoc_index[0])
-        gy_z = gpumcd_im.getline_atindex('z',isoc_index[2],isoc_index[1])
+        py_x = pin_im.get_line_atindex('x',isoc_index[1],isoc_index[0])
+        py_y = pin_im.get_line_atindex('y',isoc_index[2],isoc_index[0])
+        py_z = pin_im.get_line_atindex('z',isoc_index[2],isoc_index[1])
+        gy_x = gpumcd_im.get_line_atindex('x',isoc_index[1],isoc_index[0])
+        gy_y = gpumcd_im.get_line_atindex('y',isoc_index[2],isoc_index[0])
+        gy_z = gpumcd_im.get_line_atindex('z',isoc_index[2],isoc_index[1])
 
         y_xrel = ( gy_x - py_x ) / py_x
         y_xrat = gy_x / py_x
