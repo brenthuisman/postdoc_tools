@@ -1,5 +1,5 @@
-Pythonlibs for Photon Therapy Analysis
-========================================
+Pythonlibs for Particle/Photon Therapy Analysis
+===============================================
 
 Python 3 port of `phd_tools`. Scrapped old and long time unused functionality.
 
@@ -19,12 +19,27 @@ Clone, and put the directory in your path (`export <CLONE_DIR>:$PATH`). You can 
 
 Now, an incomplete list over the modules with a brief description:
 
-MHD or ITK Images
------------------
+Image
+-----
 
-Provides a way to operate on images as outputted by Gate (and CLITK tools). Slicing, projections, mathematical operations, stuff like that. 
+Supports r/w MetoImage (MHD,ITK) and r/w AVSField (.xdr) images. A thin wrapper around typed numpy array objects such that you can easily work with images in these data formats. Slicing, projections, mathematical operations, stuff like that is very easy with numpy, so you can easily extend things to what you need.
 
 Plot
 ----
 
-A set of function that ease life with Matplotlib. The Texify-function make them look good, and the tle.py functions provides many ways to compare data (depends on image). An older and unused and unmaintained rootplot component is kept around for the braindead.
+A set of function that ease life with Matplotlib. Makes heavy use of Seaborn. The optional Texify-function make them look good TeX-y, and the tle.py functions provides many ways to compare data (depends on image).
+
+Geo
+---
+
+Some (spatial) vector functions. In particular, a function to convert Euler angles to matrix angles.
+
+Mac
+---
+
+Operate on Gate macro files. Also with extremely basic support for the conversion of a phantom macro to an Image, which you may save to .mhx or .xdr. Requires CLITK tools
+
+NKI
+---
+
+Some custom tools for my postdoc work. Unlikely to be interesting to you.
