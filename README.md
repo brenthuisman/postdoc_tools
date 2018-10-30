@@ -39,6 +39,11 @@ Mac
 
 Operate on Gate macro files. Also with extremely basic support for the conversion of a phantom macro to an Image, which you may save to .mhx or .xdr. Requires CLITK tools
 
+RTPlan
+---
+
+Some tools for processing dumped RTplans for Gate.
+
 NKI
 ---
 
