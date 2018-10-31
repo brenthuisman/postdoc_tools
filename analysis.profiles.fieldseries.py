@@ -37,36 +37,22 @@ if not opt.noupdate:
         pin_im = image.image( imagefiles[int(2*i)] )
         gpumcd_im = image.image( imagefiles[int(2*i+1)] )
         print ('loading',imagefiles[int(2*i)],setname)
-        # print('pixelsize',pin_im.header['DimSize'])
-        # shift_half_pixel = False
-        # print ('x',pin_im.get_axis_mms('x',shift_half_pixel)[0]," ",pin_im.get_axis_mms('x',shift_half_pixel)[-1])
-        # print ('y',pin_im.get_axis_mms('y',shift_half_pixel)[0]," ",pin_im.get_axis_mms('y',shift_half_pixel)[-1])
-        # print ('z',pin_im.get_axis_mms('z',shift_half_pixel)[0]," ",pin_im.get_axis_mms('z',shift_half_pixel)[-1])
 
-        # print(pin_im.header['Offset'][1],pin_im.header['ElementSpacing'][1],pin_im.header['DimSize'][1])
-
-
-        # print(-344+270-2)
-        # print(len(pin_im.get_axis_mms('y'))*2)
-        # quit()
-
-        isoc_index = pin_im.get_pixel([i*10 for i in isoc],True) #mm to cm
+        isoc_index = pin_im.get_pixel_index([i*10 for i in isoc],True) #mm to cm
         print ("isoc_index",isoc_index)
-        isoc_index = [88, 83, 68]
-        isoc = [2./10., -169./10., 3./10.]
+        # isoc_index = [88, 84, 68]
+        # isoc = [2./10., -169./10., 3./10.]
         # echte index is [88, 83, 68], uitgaande van 10cm diep (wat voor EPID calib veldserie metingen altijd zo is)
 
-        x_x,x_y,x_z = pin_im.get_axes()
-        x_x = [x-isoc[0]*10 for x in x_x]
-        x_y = [x-isoc[1]*10 for x in x_y]
-        x_z = [x-isoc[2]*10 for x in x_z]
+        py_x,py_y,py_z = pin_im.get_profiles_at_index(isoc_index)
+        gy_x,gy_y,gy_z = gpumcd_im.get_profiles_at_index(isoc_index)
 
-        py_x = pin_im.get_line_atindex('x',isoc_index[1],isoc_index[0])
-        py_y = pin_im.get_line_atindex('y',isoc_index[2],isoc_index[0])
-        py_z = pin_im.get_line_atindex('z',isoc_index[2],isoc_index[1])
-        gy_x = gpumcd_im.get_line_atindex('x',isoc_index[1],isoc_index[0])
-        gy_y = gpumcd_im.get_line_atindex('y',isoc_index[2],isoc_index[0])
-        gy_z = gpumcd_im.get_line_atindex('z',isoc_index[2],isoc_index[1])
+        x_x,x_y,x_z = pin_im.get_axes_labels()
+
+        #alter axes labels to distance from isoc
+        x_x = [x+isoc[0]*10 for x in x_x]
+        x_y = [x-isoc[1]*10 for x in x_y] # FIXME waarom hier minus?
+        x_z = [x+isoc[2]*10 for x in x_z]
 
         y_xrel = ( gy_x - py_x ) / py_x
         y_xrat = gy_x / py_x
