@@ -9,11 +9,12 @@ parser.add_argument('--dir',default=r"Z:\brent\fieldseries\F180813B")
 parser.add_argument('--noupdate',action='store_true')
 opt = parser.parse_args()
 
-# isoc in plan.dump. here multiplied x,y coords with -1.
+# isoc in plan.dump. here multiplied y,z coords with -1.
 if 'F180813B' in opt.dir:
-    isoc = [-0.165627,-16.8293,-0.299999]
+    isoc = [0.165627,-16.8293,0.299999]
 if 'F180823Q' in opt.dir:
-    isoc = [-3.71,-16.8293,-0.299999]
+    # isoc = [-0.165627,-16.8293,-0.299999]
+    isoc = [3.71,-16.8293,0.299999]
 
 print("isoc",isoc)
 
@@ -38,7 +39,7 @@ if not opt.noupdate:
         gpumcd_im = image.image( imagefiles[int(2*i+1)] )
         print ('loading',imagefiles[int(2*i)],setname)
 
-        isoc_index = pin_im.get_pixel_index([i*10 for i in isoc],True) #mm to cm
+        isoc_index = pin_im.get_pixel_index([i*10 for i in isoc],False) #mm to cm, no halfpixel
         print ("isoc_index",isoc_index)
         # isoc_index = [88, 84, 68]
         # isoc = [2./10., -169./10., 3./10.]
@@ -50,14 +51,12 @@ if not opt.noupdate:
         x_x,x_y,x_z = pin_im.get_axes_labels()
 
         #alter axes labels to distance from isoc
-        x_x = [x+isoc[0]*10 for x in x_x]
+        x_x = [x-isoc[0]*10 for x in x_x]
         x_y = [x-isoc[1]*10 for x in x_y] # FIXME waarom hier minus?
-        x_z = [x+isoc[2]*10 for x in x_z]
+        x_z = [x-isoc[2]*10 for x in x_z]
 
         y_xrel = ( gy_x - py_x ) / py_x
         y_xrat = gy_x / py_x
-
-        print("len",len(x_x),len(py_x))
 
         columntitles = ["Setname","Generator","Axis",'Distance to isoc [mm]','Dose [cGy]']
         listoframes.append( plots.cols2dataframe(columntitles,x_x,py_x,metadata=[setname,'pinnacle','X']) )
