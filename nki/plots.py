@@ -56,7 +56,7 @@ def fieldseries(df,fname):
 	f, ((ax1,ax2),(ax3,ax4)) = plot.subplots(nrows=2, ncols=2, sharex=False, sharey=False)
 
 	df=df.query("Setname=='5cm' or Setname=='10cm' or Setname=='15cm' or Setname=='20cm'")
-	df.to_csv(fname+".tussendump.csv")
+	# df.to_csv(fname+".tussendump.csv")
 
 	sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='X'"), style="Generator", ax=ax1, lw=1)
 	sns.lineplot(x="Distance to isoc [mm]", y="Dose [cGy]", hue="Setname", data=df.query("Axis=='Y'"), style="Generator", ax=ax2, lw=1)

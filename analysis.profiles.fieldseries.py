@@ -13,7 +13,6 @@ opt = parser.parse_args()
 if 'F180813B' in opt.dir:
     isoc = [0.165627,-16.8293,0.299999]
 if 'F180823Q' in opt.dir:
-    # isoc = [-0.165627,-16.8293,-0.299999]
     isoc = [3.71,-16.8293,0.299999]
 
 print("isoc",isoc)
@@ -41,9 +40,6 @@ if not opt.noupdate:
 
         isoc_index = pin_im.get_pixel_index([i*10 for i in isoc],False) #mm to cm, no halfpixel
         print ("isoc_index",isoc_index)
-        # isoc_index = [88, 84, 68]
-        # isoc = [2./10., -169./10., 3./10.]
-        # echte index is [88, 83, 68], uitgaande van 10cm diep (wat voor EPID calib veldserie metingen altijd zo is)
 
         py_x,py_y,py_z = pin_im.get_profiles_at_index(isoc_index)
         gy_x,gy_y,gy_z = gpumcd_im.get_profiles_at_index(isoc_index)
@@ -52,7 +48,7 @@ if not opt.noupdate:
 
         #alter axes labels to distance from isoc
         x_x = [x-isoc[0]*10 for x in x_x]
-        x_y = [x-isoc[1]*10 for x in x_y] # FIXME waarom hier minus?
+        x_y = [x-isoc[1]*10 for x in x_y]
         x_z = [x-isoc[2]*10 for x in x_z]
 
         y_xrel = ( gy_x - py_x ) / py_x
