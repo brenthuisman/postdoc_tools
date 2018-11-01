@@ -22,7 +22,7 @@ Now, an incomplete list over the modules with a brief description:
 Image
 -----
 
-Supports r/w MetoImage (MHD,ITK) and r/w AVSField (.xdr) images. A thin wrapper around typed numpy array objects such that you can easily work with images in these data formats. Slicing, projections, mathematical operations, stuff like that is very easy with numpy, so you can easily extend things to what you need.
+Supports r/w MetoImage (MHD,ITK) and r/w AVSField (.xdr) images. A thin wrapper around typed numpy array objects (the `imdata` member) such that you can easily work with images in these data formats. Slicing, projections, mathematical operations, stuff like that is very easy with numpy, so you can easily extend things to what you need.
 
 Plot
 ----
