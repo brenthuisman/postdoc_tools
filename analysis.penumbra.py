@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 #sysimports
-import argparse
 from os import path
 #package imports
 import seaborn as sns,pandas as pd
