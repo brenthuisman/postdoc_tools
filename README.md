@@ -24,7 +24,7 @@ Image
 
 Supports r/w MetoImage (MHD,ITK) and r/w AVSField (.xdr) images. A thin wrapper around typed numpy array objects (the `imdata` member) such that you can easily work with images in these data formats. Slicing, projections, mathematical operations, stuff like that is very easy with numpy, so you can easily extend things to what you need.
 
-Of particular interest are the DVH analysis function, and the distance to agreement calculation (entirely based on `[npgamma](https://github.com/SimonBiggs/npgamma)`)
+Of particular interest are the DVH analysis function, and the distance to agreement calculation (entirely based on [npgamma](https://github.com/SimonBiggs/npgamma))
 
 Plot
 ----
