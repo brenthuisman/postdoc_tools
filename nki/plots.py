@@ -35,6 +35,7 @@ def boxplot_gamma(df,fname,studyset_split=True):
 	except:
 		print("Deleting of 'Files' column failed: either not present or changed name!")
 	df = pd.melt(df,id_vars=["Studyset"])# de rest: ,value_vars=[''])
+	sns.set(font_scale=1.3)
 	f = sns.catplot(y="value", x="Studyset", col="variable", data=df, kind="box", sharey=False,col_wrap=3)
 	f.set_axis_labels("", "Difference")
 	if studyset_split==False:
@@ -53,6 +54,7 @@ def fieldseries(df,fname):
 	assert( isinstance(df, pd.DataFrame) )
 
 	sns.set_style(style="whitegrid")
+	sns.set(font_scale=1.1)
 	f, ((ax1,ax2),(ax3,ax4)) = plot.subplots(nrows=2, ncols=2, sharex=False, sharey=False)
 
 	df=df.query("Setname=='5cm' or Setname=='10cm' or Setname=='15cm' or Setname=='20cm'")

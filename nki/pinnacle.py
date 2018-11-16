@@ -37,10 +37,10 @@ MaxAgeOfBackupInstitutionFiles = 180;
 def make_lpdb(inst_files,lpdbfile):
 	with open(lpdbfile, 'w') as dest_file:
 		dest_file.write(lpdb_header)
-			
+
 		firstFile = True #copy only first Institution file
 		lastFile = False
-		
+
 		for i,inst_file in enumerate(inst_files):
 			if i+1 == len(inst_files):
 				lastFile = True
