@@ -18,19 +18,20 @@ elif opt.isodoseregion != None:
     assert 0 < opt.isodoseregion < 100
     print('Using isodose contour at',opt.isodoseregion,'percent of maximum dose as region for DVH analysis.')
     maskim = im.copy()
-    maskim.tomask_atthreshold((opt.isodoseregion/100.)*maskim.imdata.max())
-
+    maskim.tomask_atthreshold((opt.isodoseregion/100.)*maskim.max())
 else:
     print('No mask or isodoseregion specified; using whole volume for DVH analysis.')
 
 if maskim != None:
     im.applymask(maskim)
-
-DVH = im.imdata.compressed().flatten()
+    DVH = im.imdata.compressed().flatten()
+else:
+    DVH = im.imdata.flatten()
 DVH.sort()
 
 D2 = DVH[round((100-2)/100*len(DVH))]
 D50 = DVH[round((100-50)/100*len(DVH))]
 D98 = DVH[round((100-98)/100*len(DVH))]
 
-print(im.imdata.max(),D2,D50,D98,im.imdata.mean())
+print("Dmax,D2,D50,D98,Dmean,Dmedian")
+print(im.imdata.max(),D2,D50,D98,im.mean(),im.median())
