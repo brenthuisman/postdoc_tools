@@ -20,22 +20,23 @@ if __name__ == '__main__': #mot voor calc_gamma thread spawner
         maskim = image.image(path.abspath(opt.maskimage))
     elif opt.maskregion != None:
         assert 0 < opt.maskregion < 100
-        print('Using isodose contour in reference image at',opt.maskregion,'percent of maximum dose as region for DVH analysis.')
+        print('Using isodose contour in reference image at',opt.maskregion,'percent of maximum dose as region for gamma analysis.')
         maskim = im1.copy()
         maskim.tomask_atthreshold((opt.maskregion/100.)*maskim.max())
 
     else:
         print('No mask or maskregion specified; using whole volume for DVH analysis.')
 
-    ga = im1.calc_gamma(im2,3,3)
+    ga = im1.compute_gamma(im2,3,3)
 
     if maskim != None:
         ga.applymask(maskim)
 
-    print("mean,median,passrate")
-    print(ga.mean(),ga.median(),np.sum(ga.imdata < 1.)/ga.imdata.count())
+    print()
+    print("mean,passrate,median,99percentile")
+    print(ga.mean(),ga.passrate(),*ga.percentiles([50,99]))
 
-    print(np.sum(ga.imdata < 1.))
+    print(np.nansum(ga.imdata < 1.))
     print(ga.imdata.count())
 
     ## save last, because it unfortunately converts masked_array to regular ones

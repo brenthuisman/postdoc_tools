@@ -24,14 +24,9 @@ else:
 
 if maskim != None:
     im.applymask(maskim)
-    DVH = im.imdata.compressed().flatten()
-else:
-    DVH = im.imdata.flatten()
-DVH.sort()
 
-D2 = DVH[round((100-2)/100*len(DVH))]
-D50 = DVH[round((100-50)/100*len(DVH))]
-D98 = DVH[round((100-98)/100*len(DVH))]
+# note: array is sorted in reverse for DVHs, i.e. compute 100-n%
+D2,D50,D98 = im.percentiles([98,50,2])
 
-print("Dmax,D2,D50,D98,Dmean,Dmedian")
-print(im.imdata.max(),D2,D50,D98,im.mean(),im.median())
+print("Dmax,D2,D50,D98,Dmean")
+print(im.imdata.max(),D2,D50,D98,im.mean())
