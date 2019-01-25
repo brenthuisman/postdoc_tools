@@ -1,5 +1,7 @@
 import glob,subprocess
 from os import path
+from shutil import copyfile
+import image
 
 dosiaengine = r"D:\postdoc\code\DosiaEngine\x64\Release\DosiaEngine.exe"
 xdr_arithm = r"D:\postdoc\code\xdr_arithm\src\Win32\Debug\xdr_arithm.exe"
@@ -34,8 +36,12 @@ def makedose(casedir,recalcdose=True,sumdoses=True):
 	tpsdosesum = path.join(casedir,'sum_dose.xdr')
 	gpumcddosesum = path.join(casedir,'sum_gpumcd_dose.xdr')
 
-	if len(beamdirs) == 1:#todo remove
-		from shutil import copyfile
+	#copy mask if exists.
+	if path.isfile(path.join(beamdirs[0],'ptv.xdr')):
+		copyfile(path.join(beamdirs[0],'ptv.xdr'), path.join(casedir,'ptv.xdr'))
+
+	#copy doses if only 1 beam
+	if len(beamdirs) == 1:
 		copyfile(path.join(beamdirs[0],'dose.xdr'),tpsdosesum)
 		copyfile(path.join(beamdirs[0],'gpumcd_dose.xdr'),gpumcddosesum)
 		return  [tpsdosesum,gpumcddosesum,beamdirs]
@@ -79,6 +85,53 @@ def comparedose(casedir,*args,**kwargs):
 	print(result)
 
 	result = "files="+dose1+";"+dose2+" "+result
+
+	return result
+
+def dvhcompare(casedir,*args,**kwargs):
+	dose1=''
+	dose2=''
+	if len(args)==0:
+		#assume casedir is a dosia dumpdir
+		assert path.isdir(casedir)
+		dose1 = path.join(casedir,'sum_dose.xdr')
+		dose2 = path.join(casedir,'sum_gpumcd_dose.xdr')
+	else:
+		#assume casedir is a file and secondfile also
+		assert path.isfile(casedir)
+		dose1 = casedir
+		dose2 = args[0]#secondfile
+
+	assert path.isfile(dose1)
+	assert path.isfile(dose2)
+
+	plandose=image.image(dose1)
+	otherdose=image.image(dose2)
+
+	maskim = None
+	#is there a mask?
+	if path.isfile(path.join(casedir,'ptv.xdr')):
+		maskim = image.image(path.abspath(path.join(casedir,'ptv.xdr')))
+	else:
+		print('No mask or maskregion specified; using isodose 50 volume of plandose for DVH analysis.')
+		maskim = plandose.copy()
+		maskim.tomask_atthreshold((50/100.)*maskim.max())
+
+	plandose.applymask(maskim)
+	otherdose.applymask(maskim)
+
+	# note: array is sorted in reverse for DVHs, i.e. compute 100-n%
+	planD2,planD50,planD98 = plandose.percentiles([98,50,2])
+	otherD2,otherD50,otherD98 = otherdose.percentiles([98,50,2])
+
+	labels = ["Dmax","D2","D50","D98","Dmean"]
+	planres = plandose.max(),planD2,planD50,planD98,plandose.mean()
+	otherres = otherdose.max(),otherD2,otherD50,otherD98,otherdose.mean()
+	diffres = [label+"="+str(i-j) for label,i,j in zip(labels,planres,otherres)]
+
+	print(diffres)
+
+	result = "files="+dose1+";"+dose2+" "+' '.join(diffres)
 
 	return result
 

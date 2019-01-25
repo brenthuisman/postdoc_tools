@@ -34,6 +34,10 @@ def boxplot_gamma(df,fname,studyset_split=True):
 		del df['Files']
 	except:
 		print("Deleting of 'Files' column failed: either not present or changed name!")
+	try:
+		del df['files']
+	except:
+		print("Deleting of 'Files' column failed: either not present or changed name!")
 	df = pd.melt(df,id_vars=["Studyset"])# de rest: ,value_vars=[''])
 	sns.set(font_scale=1.3)
 	f = sns.catplot(y="value", x="Studyset", col="variable", data=df, kind="box", sharey=False,col_wrap=3)

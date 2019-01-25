@@ -1,7 +1,7 @@
 import os,subprocess
 
 local_pinnacle_dir = r"Z:\brent\pinnacle_dump"
-dosia_exe = r"D:\postdoc\code\Dosia\trunk\src\Win64\Release\Dosia.exe"
+dosia_exe = r"D:\postdoc\code\Dosia\trunk\src\Win32\Debug\Dosia.exe"
 outdir = r"Z:\brent\dosia_dump"
 
 failed_dumps=[]
@@ -14,6 +14,7 @@ with open(os.path.join(local_pinnacle_dir,'purls.txt'),'r') as purls:
     for line in purls.readlines():
         if 'Epid' in line:
             continue
+        line = line.replace(':patient_',':Patient_') #yes....
         cmd=dosia_exe+' /beam '+line+' /outdir '+outdir
         print( cmd )
         #os.popen( cmd )

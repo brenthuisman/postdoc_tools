@@ -13,6 +13,7 @@ recalcdose = args.recalcdose
 fname = os.path.join(args.pindumpdir,"gammaresults")+datetime.datetime.now().strftime("_%Y%m%d_%H%M%S")
 
 res=[]
+dvhres=[]
 # if args.nosum:
 # 	cases = [pindumpdir]
 # else:
@@ -29,6 +30,7 @@ if True: #recalcdose
 		# if not args.nosum:
 		try:
 			res.append("Studyset="+casedir+" "+runners.comparedose(casedir))
+			dvhres.append("Studyset="+casedir+" "+runners.dvhcompare(casedir))
 		except (subprocess.CalledProcessError,AssertionError):
 			print("Dose comparison for case",casedir,"failed to execute, skipped for analysis.")
 		# except AssertionError as e:
@@ -38,10 +40,18 @@ if True: #recalcdose
 		# 	print ("================= ========== ==================")
 	# if not args.nosum:
 	df = plots.gamma2dataframe(res,["Studyset","Files","Mean γ","γ passrate","γ99","γ95","Max γ","Min γ"])
-	df.to_csv(fname+".csv")
+	df.to_csv(fname+".gamma.csv")
+	dfdvh = plots.gamma2dataframe(dvhres)
+	dfdvh.to_csv(fname+".dvh.csv")
 else:
-	last_fname = sorted( glob.glob(os.path.splitext(fname)[0].rstrip('1234567890_')+'*.csv') ,reverse=True)[0]
+	last_fname = sorted( glob.glob(os.path.splitext(fname)[0].rstrip('1234567890_')+'*.gamma.csv') ,reverse=True)[0]
 	df = pd.read_csv(last_fname,index_col=0)
 
-plots.boxplot_gamma(df,fname, studyset_split=False)
-plots.boxplot_gamma(df,fname)
+	last_fnamedvh = sorted( glob.glob(os.path.splitext(fname)[0].rstrip('1234567890_')+'*.dvh.csv') ,reverse=True)[0]
+	dfdvh = pd.read_csv(last_fnamedvh,index_col=0)
+
+plots.boxplot_gamma(df,fname+'gamma', studyset_split=False)
+plots.boxplot_gamma(df,fname+'gamma')
+
+plots.boxplot_gamma(dfdvh,fname+'dvh', studyset_split=False)
+plots.boxplot_gamma(dfdvh,fname+'dvh')
