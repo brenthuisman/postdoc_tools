@@ -14,20 +14,15 @@ rungpu=False
 noiselevels = [0.2,0.5,1.0,2.0,5.0]
 realisations = 10
 
-im_artificial_noise=[]
-im_gpumcd_noise=[]
-
 for nlevel in noiselevels:
     for real in range(realisations):
-        im_artificial_noise.append(image.image('',DimSize=[50,50,50],ElementSpacing=[2,2,2]))
-        im_artificial_noise[-1].fill_gaussian_noise(1000, nlevel)
-        im_artificial_noise[-1].saveas(r'D:\postdoc\analyses\unc_study\artnoise'+str(nlevel)+'_'+str(real)+'.xdr')
+        im_art=image.image('',DimSize=[50,50,50],ElementSpacing=[2,2,2])
+        im_art.fill_gaussian_noise(1000, nlevel)
+        im_art.saveas(r'D:\postdoc\analyses\unc_study\artnoise'+str(nlevel)+'_'+str(real)+'.xdr')
 
         outname = r'D:\postdoc\analyses\unc_study\gpunoise' + str(nlevel)+'_'+str(real)+'.xdr'
         if rungpu:
-                runners.execute(r"D:\postdoc\analyses\unc_study\BeamletLibraryConsumer\x64\Release\BeamletLibraryConsumer.exe","-o \""+outname+"\" -p "+str(nlevel))
-
-# reset lists
+            runners.execute(r"D:\postdoc\analyses\unc_study\BeamletLibraryConsumer\x64\Release\BeamletLibraryConsumer.exe","-o \""+outname+"\" -p "+str(nlevel))
 
 im_artificial_noise=[]
 im_gpumcd_noise=[]
@@ -46,8 +41,6 @@ for nlevel in noiselevels:
 
         im_artificial_noise[-1].tomask_atvolume(10)
         im_gpumcd_noise[-1].tomask_atvolume(10)
-
-        #im_artificial_noise[-1].imdata = im_artificial_noise[-1].imdata.astype(np.float32, copy=False)
 
         im_artificial_noise[-1].saveas(masked_artfname)
         im_gpumcd_noise[-1].saveas(masked_gpufname)
