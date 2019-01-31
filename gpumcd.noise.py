@@ -9,6 +9,8 @@ from nki import runners
 # parser.add_argument('--perc', action='store_true')
 # opt = parser.parse_args()
 
+rungpu=False
+
 noiselevels = [0.2,0.5,1.0,2.0,5.0]
 realisations = 10
 
@@ -22,32 +24,38 @@ for nlevel in noiselevels:
         im_artificial_noise[-1].saveas(r'D:\postdoc\analyses\unc_study\artnoise'+str(nlevel)+'_'+str(real)+'.xdr')
 
         outname = r'D:\postdoc\analyses\unc_study\gpunoise' + str(nlevel)+'_'+str(real)+'.xdr'
-        runners.execute(r"D:\postdoc\analyses\unc_study\BeamletLibraryConsumer\x64\Release\BeamletLibraryConsumer.exe","-o \""+outname+"\" -p "+str(nlevel))
+        if rungpu:
+                runners.execute(r"D:\postdoc\analyses\unc_study\BeamletLibraryConsumer\x64\Release\BeamletLibraryConsumer.exe","-o \""+outname+"\" -p "+str(nlevel))
+
+# reset lists
+
+im_artificial_noise=[]
+im_gpumcd_noise=[]
 
 gammaresult=[]
-#avgnoise=[]
 
 for nlevel in noiselevels:
+    print(nlevel)
     for real in range(realisations):
-        artfname = r'D:\postdoc\analyses\unc_study\artnoise'+str(nlevel)+'_'+str(real)+'.xdr')
-        gpufname = r'D:\postdoc\analyses\unc_study\gpunoise'+str(nlevel)+'_'+str(real)+'.xdr')
-        masked_artfname = r'D:\postdoc\analyses\unc_study\artnoise'+str(nlevel)+'_'+str(real)+'.masked.xdr')
-        masked_gpufname = r'D:\postdoc\analyses\unc_study\gpunoise'+str(nlevel)+'_'+str(real)+'.masked.xdr')
+        artfname = r'D:\postdoc\analyses\unc_study\artnoise'+str(nlevel)+'_'+str(real)+'.xdr'
+        gpufname = r'D:\postdoc\analyses\unc_study\gpunoise'+str(nlevel)+'_'+str(real)+'.xdr'
+        masked_artfname = r'D:\postdoc\analyses\unc_study\artnoise'+str(nlevel)+'_'+str(real)+'.masked.xdr'
+        masked_gpufname = r'D:\postdoc\analyses\unc_study\gpunoise'+str(nlevel)+'_'+str(real)+'.masked.xdr'
         im_artificial_noise.append( image.image( artfname ) )
         im_gpumcd_noise.append( image.image( gpufname ) )
 
         im_artificial_noise[-1].tomask_atvolume(10)
         im_gpumcd_noise[-1].tomask_atvolume(10)
 
-        im_artificial_noise[-1].imdata = im_artificial_noise[-1].imdata.astype(np.float32, copy=False)
+        #im_artificial_noise[-1].imdata = im_artificial_noise[-1].imdata.astype(np.float32, copy=False)
 
         im_artificial_noise[-1].saveas(masked_artfname)
         im_gpumcd_noise[-1].saveas(masked_gpufname)
 
         gammaresult.append(runners.comparedose(masked_artfname,masked_gpufname))
 
-        artn = im_artificial_noise[-1].std()/im_artificial_noise[-1].mean()*100.
-        gpun = im_gpumcd_noise[-1].std()/im_gpumcd_noise[-1].mean()*100.
+        artn = im_artificial_noise[-1].std()/im_artificial_noise[-1].mean()
+        gpun = im_gpumcd_noise[-1].std()/im_gpumcd_noise[-1].mean()
         print("artificial noise (std/mean):",artn)
         print("gpumcd noise (std/mean):",gpun)
 
