@@ -11,7 +11,13 @@ from nki import runners
 
 rungpu=False
 
+## ALERT!!!! BeamLetLibconsumer schrijft doubles maar zet xdr_real in header!!!!!
+## gpumcd output als double: ziet er vreemd uit. gaat iets mis bij casten.
+## evenzo, gpumcd maskers worden automatisch als float opgeslagen, terwijl artnoise double blijft. waarom?
+
+
 noiselevels = [0.2,0.5,1.0,2.0,5.0]
+#noiselevels = [5.0]
 realisations = 10
 
 if rungpu:
@@ -24,6 +30,10 @@ if rungpu:
 			outname = r'D:\postdoc\analyses\unc_study\gpunoise' + str(nlevel)+'_'+str(real)+'.xdr'
 			runners.execute(r"D:\postdoc\analyses\unc_study\BeamletLibraryConsumer\x64\Release\BeamletLibraryConsumer.exe","-o \""+outname+"\" -p "+str(nlevel))
 
+
+
+mask = image.image( r"D:\postdoc\analyses\unc_study\gpunoise0.2_0.xdr" )
+mask.tomask_atvolume(10)
 
 gammaresult=[]
 
@@ -42,8 +52,11 @@ for nlevel in noiselevels:
 		im_artificial_noise.append( image.image( artfname ) )
 		im_gpumcd_noise.append( image.image( gpufname ) )
 
-		mask = image.image( gpufname )
-		mask.tomask_atvolume(10)
+		print("--1---before")
+		print("__artificial noise (std,mean):",im_artificial_noise[-1].std(),im_artificial_noise[-1].mean(),im_artificial_noise[-1].nanfrac())
+		print("__gpumcd noise (std,mean):",im_gpumcd_noise[-1].std(),im_gpumcd_noise[-1].mean(),im_gpumcd_noise[-1].nanfrac())
+
+		#FIXME: problem with masking, is doesnt produce a correct np.ma
 		im_artificial_noise[-1].applymask(mask)
 		im_gpumcd_noise[-1].applymask(mask)
 
@@ -54,8 +67,14 @@ for nlevel in noiselevels:
 
 		artn = im_artificial_noise[-1].std()/im_artificial_noise[-1].mean()
 		gpun = im_gpumcd_noise[-1].std()/im_gpumcd_noise[-1].mean()
-		print("artificial noise (std/mean):",artn)
-		print("gpumcd noise (std/mean):",gpun)
+		# print("artificial noise (std/mean):",artn*100)
+		# print("gpumcd noise (std/mean):",gpun*100)
+
+		print("--2---after")
+		print("__artificial noise (std,mean):",im_artificial_noise[-1].std(),im_artificial_noise[-1].mean(),im_artificial_noise[-1].nanfrac())
+		print("__gpumcd noise (std,mean):",im_gpumcd_noise[-1].std(),im_gpumcd_noise[-1].mean(),im_gpumcd_noise[-1].nanfrac())
+
+	#print (len(im_artificial_noise))
 
 		# artnoise = im_artificial_noise[-1].get_profiles_at_index(im_artificial_noise[-1].get_pixel_index([0,-30,0],True))
 		# gpunoise = im_gpumcd_noise[-1].get_profiles_at_index(im_gpumcd_noise[-1].get_pixel_index([0,-30,0],True))
