@@ -11,14 +11,10 @@ from nki import runners
 
 rungpu=False
 
-## ALERT!!!! BeamLetLibconsumer schrijft doubles maar zet xdr_real in header!!!!!
-## gpumcd output als double: ziet er vreemd uit. gaat iets mis bij casten.
-## evenzo, gpumcd maskers worden automatisch als float opgeslagen, terwijl artnoise double blijft. waarom?
-
-
 noiselevels = [0.2,0.5,1.0,2.0,5.0]
-#noiselevels = [5.0]
+# noiselevels = [5.0]
 realisations = 10
+# realisations =1
 
 if rungpu:
 	for nlevel in noiselevels:
@@ -52,11 +48,6 @@ for nlevel in noiselevels:
 		im_artificial_noise.append( image.image( artfname ) )
 		im_gpumcd_noise.append( image.image( gpufname ) )
 
-		print("--1---before")
-		print("__artificial noise (std,mean):",im_artificial_noise[-1].std(),im_artificial_noise[-1].mean(),im_artificial_noise[-1].nanfrac())
-		print("__gpumcd noise (std,mean):",im_gpumcd_noise[-1].std(),im_gpumcd_noise[-1].mean(),im_gpumcd_noise[-1].nanfrac())
-
-		#FIXME: problem with masking, is doesnt produce a correct np.ma
 		im_artificial_noise[-1].applymask(mask)
 		im_gpumcd_noise[-1].applymask(mask)
 
@@ -67,12 +58,13 @@ for nlevel in noiselevels:
 
 		artn = im_artificial_noise[-1].std()/im_artificial_noise[-1].mean()
 		gpun = im_gpumcd_noise[-1].std()/im_gpumcd_noise[-1].mean()
-		# print("artificial noise (std/mean):",artn*100)
-		# print("gpumcd noise (std/mean):",gpun*100)
+		print("artificial noise (std/mean):",artn*100)
+		print("gpumcd noise (std/mean):",gpun*100)
 
 		print("--2---after")
-		print("__artificial noise (std,mean):",im_artificial_noise[-1].std(),im_artificial_noise[-1].mean(),im_artificial_noise[-1].nanfrac())
-		print("__gpumcd noise (std,mean):",im_gpumcd_noise[-1].std(),im_gpumcd_noise[-1].mean(),im_gpumcd_noise[-1].nanfrac())
+		print("__artificial noise (std,mean):",im_artificial_noise[-1].std(),im_artificial_noise[-1].mean())
+		print("__gpumcd noise (std,mean):",im_gpumcd_noise[-1].std(),im_gpumcd_noise[-1].mean())
+
 
 	#print (len(im_artificial_noise))
 
