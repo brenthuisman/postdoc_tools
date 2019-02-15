@@ -37,8 +37,8 @@ def makedose(casedir,recalcdose=True,sumdoses=True):
 	gpumcddosesum = path.join(casedir,'sum_gpumcd_dose.xdr')
 
 	#copy mask if exists.
-	if path.isfile(path.join(beamdirs[0],'ptv.xdr')):
-		copyfile(path.join(beamdirs[0],'ptv.xdr'), path.join(casedir,'ptv.xdr'))
+	# if path.isfile(path.join(beamdirs[0],'ptv.xdr')):
+	# 	copyfile(path.join(beamdirs[0],'ptv.xdr'), path.join(casedir,'ptv.xdr'))
 
 	#copy doses if only 1 beam
 	if len(beamdirs) == 1:

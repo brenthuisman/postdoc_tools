@@ -13,15 +13,6 @@ colors = ['#3778bf','#feb308','#7b0323','#7bb274','#a8a495','#825f87']*20
 #colors = ['#C40233','#FFD300','#009F6B','#0087BD','#000000']*20
 
 
-#nice little function to have static vars within a function (which is not in a class)
-def static_vars(**kwargs):
-    def decorate(func):
-        for k in kwargs:
-            setattr(func, k, kwargs[k])
-        return func
-    return decorate
-
-
 def plot_errorbands(ax,x,y,ystddev,**kwargs):
     ax.plot(x,y,**kwargs)
     ax.fill_between(x, [i-istd for i,istd in zip(y,ystddev)], [i+istd for i,istd in zip(y,ystddev)],alpha=0.3,interpolate=True,lw=0,**kwargs)
@@ -29,7 +20,7 @@ def plot_errorbands(ax,x,y,ystddev,**kwargs):
 
 
 def fill_between_steps(ax, x, y1, y2=0, step_where='pre', **kwargs):
-    ''' fill between a step plot and 
+    ''' fill between a step plot and
 
     Parameters
     ----------
@@ -59,7 +50,7 @@ def fill_between_steps(ax, x, y1, y2=0, step_where='pre', **kwargs):
         raise ValueError("where must be one of {{'pre', 'post', 'mid'}} "
                         "You passed in {wh}".format(wh=step_where))
 
-    # make sure y values are up-converted to arrays 
+    # make sure y values are up-converted to arrays
     if np.isscalar(y1):
         y1 = np.ones_like(x) * y1
 
@@ -67,7 +58,7 @@ def fill_between_steps(ax, x, y1, y2=0, step_where='pre', **kwargs):
         y2 = np.ones_like(x) * y2
 
     # temporary array for up-converting the values to step corners
-    # 3 x 2N - 1 array 
+    # 3 x 2N - 1 array
 
     vertices = np.vstack((x, y1, y2))
 
@@ -132,7 +123,7 @@ def geterrorbands(uncert,sig):
     #returned as percentages
     minus = [(yields-unc) for unc,yields in zip(uncert, sig)]
     plus = [(yields+unc) for unc,yields in zip(uncert, sig)]
-    return minus,plus 
+    return minus,plus
 
 
 def getloghist(data,nrbin=50):
@@ -145,28 +136,28 @@ def getloghist(data,nrbin=50):
 ###################### Histogram plotters
 
 def plot2dhist(ax,X,Y,**kwargs):
-    
+
     if len(X) == 0:
         return
-    
+
     if 'log' in kwargs:
         if kwargs.pop('log'):
             kwargs['norm'] = mpl.colors.LogNorm()
-    
+
     if 'xbins' in kwargs: # SHOULD BE BIN EDGES!!!!!
         xbins = kwargs.pop('xbins')
     else:
         xbins = np.linspace(min(X),max(X),40)
-        
+
     if 'ybins' in kwargs: # SHOULD BE BIN EDGES!!!!!
         ybins = kwargs.pop('ybins')
     else:
         ybins = np.linspace(min(Y),max(Y),40)
-    
+
     #default args to pcolormesh
     if 'cmap' not in kwargs:
         kwargs['cmap'] = 'coolwarm'
-    
+
     counts, _, _ = np.histogram2d(X, Y, bins=(xbins, ybins))
     #a = ax.imshow(counts.T)
     a = ax.pcolormesh(xbins, ybins, counts.T, **kwargs)
@@ -179,24 +170,24 @@ def plot2dhist(ax,X,Y,**kwargs):
     return counts
 
 def plot1dhist(ax,data,**kwargs):
-    
+
     if len(data) == 0:
         return
-    
+
     if not 'facecolor' in kwargs:
         kwargs['facecolor'] = 'indianred'
-    
+
     if not 'lw' in kwargs:
         kwargs['lw'] = 0
-        
+
     if not 'bins' in kwargs: # SHOULD BE BIN EDGES!!!!!
         print("mindata",min(data),"maxdata",max(data))
         kwargs['bins']=np.linspace(min(data),max(data),40)
-        
+
     if 'count' in kwargs:
         ax.text(0.05, 0.95, 'Counts: '+str(len(data)) , ha='left', va='center', transform=ax.transAxes)
         kwargs.pop('count')
-    
+
     n, _, _ = ax.hist(data,**kwargs)
     return n
 
@@ -219,24 +210,24 @@ def label_percentile(ax,data,ycoord,**kwargs):
 
 
 def plot1dhist_logx(ax,data,**kwargs):
-    
+
     if len(data) == 0:
         return
-    
+
     kwargs['drawstyle'] = 'steps'
 
     if not 'color' in kwargs:
         kwargs['color'] = 'indianred'
-    
+
     num=50
     if 'num' in kwargs: # pass to np.logspace, not graph
         num = kwargs.pop('num')
-    
+
     edges=[None,None]
     if 'edges' in kwargs: # pass to np.logspace, not graph
         edges = kwargs.pop('edges')
         assert len(edges)==2
-        
+
     if edges[0] is None:
         lowedge = np.log10(np.nanmin(data))
     else:
@@ -249,45 +240,45 @@ def plot1dhist_logx(ax,data,**kwargs):
     #print(edges,lowedge,highedge, np.logspace(lowedge,highedge, num=num))
     hist,plotbins = np.histogram(data, bins=np.logspace(lowedge,highedge, num=num))
     center = (plotbins[:-1] + plotbins[1:]) / 2
-    
+
     ax.plot(center,hist,**kwargs)
-    
+
     ax.semilogx()
     return
 
 
 def plotbar(ax,data,**kwargs):
     #if you want logarithmic axis, supply log=True to kwargs
-    
+
     from collections import Counter
-    
+
     if type(data) is list:
         cntr = Counter(data)
         labels = list(cntr.keys())
     if issubclass(type(data), dict):
         cntr = data
         labels = list(data.keys())
-    
+
     if not 'facecolor' in kwargs:
         kwargs['facecolor'] = 'indianred'
-    
+
     if not 'lw' in kwargs:
         kwargs['lw'] = 0
-    
+
     if 'relabel' in kwargs:
         relabel = kwargs.pop('relabel')
         labels = [relabel[lab] for lab in labels]
-    
+
     if 'bincount' in kwargs:
         postfix = kwargs.pop('bincount')
         for i, v in enumerate(cntr.values()):
             ax.text(i, v + 3, str(int(round(v)))+postfix, color=kwargs['facecolor'], fontweight='bold')
-    
+
     if 'rotation' in kwargs:
         rotation = kwargs.pop('rotation')
     else:
         rotation = 20
-    
+
     ind = np.arange(len(cntr))
     margin = 0.2
     width = (1.-2.*margin)
@@ -411,10 +402,10 @@ def subplots(*args,**kwargs):
 
 def legend(*args,**kwargs):
     return plt.legend(*args,**kwargs)
-    
+
 def close(*args,**kwargs):
     return plt.close(*args,**kwargs)
-    
+
 def get_cmap(*args,**kwargs):
     return plt.get_cmap(*args,**kwargs)
 
