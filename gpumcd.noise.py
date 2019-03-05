@@ -22,7 +22,7 @@ realisations = 10
 if rungpu:
 	for nlevel in noiselevels:
 		for real in range(realisations):
-			im_art=image.image('',DimSize=[50,50,50],ElementSpacing=[2,2,2])
+			im_art=image.image(DimSize=[50,50,50],ElementSpacing=[2,2,2])
 			im_art.fill_gaussian_noise(1000, nlevel)
 			im_art.saveas(r'D:\postdoc\analyses\unc_study\artnoise'+str(nlevel)+'_'+str(real)+'.xdr')
 
@@ -51,11 +51,6 @@ for nlevel in noiselevels:
 
 		im_artificial_noise.applymask(mask)
 		im_gpumcd_noise.applymask(mask)
-
-		# im_artificial_noise.saveas(masked_artfname)
-		# im_gpumcd_noise.saveas(masked_gpufname)
-
-		# gammaresult.append(runners.comparedose(masked_artfname,masked_gpufname))
 
 		artn = im_artificial_noise.relunc()
 		gpun = im_gpumcd_noise.relunc()
@@ -127,27 +122,3 @@ for nlevel in noiselevels:
 	f.savefig(fname+'.pdf', bbox_inches='tight')
 	# f.savefig(fname+'.png', bbox_inches='tight',dpi=300)
 
-
-
-
-
-
-
-
-
-
-
-
-
-	#print (len(im_artificial_noise))
-
-		# artnoise = im_artificial_noise[-1].get_profiles_at_index(im_artificial_noise[-1].get_pixel_index([0,-30,0],True))
-		# gpunoise = im_gpumcd_noise[-1].get_profiles_at_index(im_gpumcd_noise[-1].get_pixel_index([0,-30,0],True))
-
-		# for aa,gg in zip(artnoise,gpunoise):
-		# 	a = aa[round(len(aa)/3):round(2*len(aa)/3)]
-		# 	g = gg[round(len(gg)/3):round(2*len(gg)/3)]
-		# 	print("for noiselevel",nlevel,":")
-		# 	print("profile artificial noise (std/mean):",np.nanstd(a)/np.nanmean(a)*100.)
-		# 	print("profile gpumcd noise (std/mean):",np.nanstd(g)/np.nanmean(g)*100.)
-		# 	break

@@ -1,6 +1,9 @@
 import sys,os,glob,argparse,subprocess, pandas as pd
-from nki import runners,plots
+from shutil import copyfile
 import datetime
+from nki import runners,plots
+import image
+from pathlib import Path
 
 parser = argparse.ArgumentParser(description='secret')
 parser.add_argument('pindumpdir')
@@ -14,32 +17,41 @@ fname = os.path.join(args.pindumpdir,"gammaresults")+datetime.datetime.now().str
 
 res=[]
 dvhres=[]
-# if args.nosum:
-# 	cases = [pindumpdir]
-# else:
-cases = [x for x in glob.glob(os.path.join(pindumpdir,"*/"), recursive=True) if not os.path.dirname(x).split(os.sep)[-1].startswith('__')]
+cases = [x for x in glob.glob(os.path.join(pindumpdir,"*/"), recursive=False) if not os.path.dirname(x).split(os.sep)[-1].startswith('__')]
 
 if True: #recalcdose
 	for casedir in cases:
-		# try:
-		try:
-			# runners.makedose(casedir,recalcdose,not args.nosum)
-			runners.makedose(casedir,recalcdose)
-		except subprocess.CalledProcessError:
-			print("Dose generation for case",casedir,"failed to execute, skipped for analysis.")
-		# if not args.nosum:
-		try:
-			res.append("Studyset="+casedir+" "+runners.comparedose(casedir))
-			dvhres.append("Studyset="+casedir+" "+runners.dvhcompare(casedir))
-		except (subprocess.CalledProcessError,AssertionError):
-			print("Dose comparison for case",casedir,"failed to execute, skipped for analysis.")
-		# except AssertionError as e:
-		# 	print ("================= Holy Shit! ==================")
-		# 	print (e)
-		# 	print (casedir)
-		# 	print ("================= ========== ==================")
-	# if not args.nosum:
-	df = plots.gamma2dataframe(res,["Studyset","Files","Mean γ","γ passrate","γ99","γ95","Max γ","Min γ"])
+		patient=runners.dir2plans(casedir)
+		for key,plan in patient.items():
+			try:
+				gpubeamdoses = []
+				pinbeamdoses = []
+				for i,beam in enumerate(plan):
+					runners.calcdose(beam,recalcdose)
+					gpubeamdoses.append(image.image(beam/"gpumcd_dose.xdr"))
+					pinbeamdoses.append(image.image(beam/"dose.xdr"))
+					mask=beam/"ptvmask.xdr"
+					if i==0 and mask.is_file():
+						copyfile(mask, key+"ptvmask.xdr")
+
+				##sommen
+				if len(gpubeamdoses)>1:
+					for i in range(1,len(gpubeamdoses)):
+						gpubeamdoses[0].add(gpubeamdoses[i])
+						pinbeamdoses[0].add(pinbeamdoses[i])
+				gpubeamdoses[0].saveas(key+"sumpin.xdr")
+				pinbeamdoses[0].saveas(key+"sumgpu.xdr")
+
+			except subprocess.CalledProcessError:
+				print("Dose generation for case",casedir,"failed to execute, skipped for analysis.")
+				continue #can skip what follows.
+
+			try:
+				res.append("Studyset="+key+" "+runners.calcgamma(Path(key+"sumpin.xdr"),Path(key+"sumgpu.xdr"),Path(key+'gammamap.xdr'),Path(key+"ptvmask.xdr"),recalcdose))
+				dvhres.append("Studyset="+key+" "+runners.calcdvh(Path(key+"sumpin.xdr"),Path(key+"sumgpu.xdr"),Path(key+"ptvmask.xdr")))
+			except (subprocess.CalledProcessError,AssertionError):
+				print("Dose comparison for case",plan,"failed to execute, skipped for analysis.")
+	df = plots.gamma2dataframe(res)#,["Studyset","Files","Mean γ","γ passrate","γ99","γ95","Max γ","Min γ"])
 	df.to_csv(fname+".gamma.csv")
 	dfdvh = plots.gamma2dataframe(dvhres)
 	dfdvh.to_csv(fname+".dvh.csv")

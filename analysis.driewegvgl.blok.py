@@ -41,15 +41,15 @@ if not args.noupdate:
 	results = []
 
 	for i,case in enumerate(cases):
-		case.dicom_pin = runners.setongrid(case.dicom_pin,case.dosia_pin)
-		case.dicom_mon = runners.setongrid(case.dicom_mon,case.dosia_pin)
-		case.dosia_pin = runners.factor(case.dosia_pin,'divc','100')
-		case.dosia_gpumcd = runners.factor(case.dosia_gpumcd,'divc','100')
+		case.dicom_pin = runners.setongrid_old(case.dicom_pin,case.dosia_pin)
+		case.dicom_mon = runners.setongrid_old(case.dicom_mon,case.dosia_pin)
+		case.dosia_pin = runners.factor_old(case.dosia_pin,'divc','100')
+		case.dosia_gpumcd = runners.factor_old(case.dosia_gpumcd,'divc','100')
 
-		results.append( "Studyset=PinPin "+runners.comparedose(case.dicom_pin,case.dosia_pin,files=True) )
-		results.append( "Studyset=Dicom "+runners.comparedose(case.dicom_pin,case.dicom_mon,files=True) )
-		results.append( "Studyset=MonDosia "+runners.comparedose(case.dosia_gpumcd,case.dicom_mon,files=True) )
-		results.append( "Studyset=Dosia "+runners.comparedose(case.dosia_pin,case.dosia_gpumcd,files=True) )
+		results.append( "Studyset=PinPin "+runners.comparedose_old(case.dicom_pin,case.dosia_pin,files=True) )
+		results.append( "Studyset=Dicom "+runners.comparedose_old(case.dicom_pin,case.dicom_mon,files=True) )
+		results.append( "Studyset=MonDosia "+runners.comparedose_old(case.dosia_gpumcd,case.dicom_mon,files=True) )
+		results.append( "Studyset=Dosia "+runners.comparedose_old(case.dosia_pin,case.dosia_gpumcd,files=True) )
 
 	df = plots.gamma2dataframe(results,["Studyset","Files","Mean γ","γ passrate","γ99","γ95","Max γ","Min γ"])
 	df.to_csv(fname+".csv")

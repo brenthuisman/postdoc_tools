@@ -9,8 +9,8 @@ opt = parser.parse_args()
 
 fname = os.path.join(opt.casedir,"gammaresults")+datetime.datetime.now().strftime("_%Y%m%d_%H%M%S")
 
-runners.makedose(opt.casedir,opt.recalcdose)
-res = "Studyset="+opt.casedir+" "+runners.comparedose(opt.casedir)
+runners.makedose_old(opt.casedir,opt.recalcdose)
+res = "Studyset="+opt.casedir+" "+runners.comparedose_old(opt.casedir)
 
 df = plots.gamma2dataframe([res],["Studyset","Files","Mean γ","γ passrate","γ99","γ95","Max γ","Min γ"]) #distributions dont make sense for one case, but OK
 df.to_csv(fname+".csv")
