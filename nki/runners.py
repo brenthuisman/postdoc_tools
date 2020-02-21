@@ -1,6 +1,6 @@
 import subprocess,collections
 from pathlib import Path
-import image
+from medimage import image
 
 dosiaengine = r"D:\postdoc\code\DosiaEngine\x64\Release\DosiaEngine.exe"
 xdr_gamma = r"D:\postdoc\code\xdr_gamma\src\Win32\Debug\xdr_gamma.exe"
@@ -48,13 +48,13 @@ def calcgamma(dose1,dose2,outf,mask=None,overwrite=True):
 		arrgs = "/dose1 "+str(dose1)+" /dose2 "+str(dose2)+" /outf "+str(outf)+" 2>&1"
 		print(arrgs)
 		execute(xdr_gamma,arrgs)
-	gammamap = image.image(outf)
+	gammamap = image(outf)
 	if mask == None or not mask.is_file():
 		print('No mask or maskregion specified; using isodose 50 volume of gammamap for gamma statistical analysis.')
-		maskim = image.image(dose1)
+		maskim = image(dose1)
 		maskim.tomask_atthreshold((50/100.)*maskim.max())
 	else:
-		maskim = image.image(mask)
+		maskim = image(mask)
 	gammamap.applymask(maskim)
 	result = 'mean='+str(gammamap.mean())+' passrate='+str(gammamap.passrate())
 	result = "files="+str(dose1)+";"+str(dose2)+" "+result
@@ -64,14 +64,14 @@ def calcgamma(dose1,dose2,outf,mask=None,overwrite=True):
 
 
 def calcdvh(dose1,dose2,mask=None):
-	plandose=image.image(dose1)
-	otherdose=image.image(dose2)
+	plandose=image(dose1)
+	otherdose=image(dose2)
 	if mask == None or not mask.is_file():
 		print('No mask or maskregion specified; using isodose 50 volume of plandose for DVH analysis.')
 		maskim = plandose.copy()
 		maskim.tomask_atthreshold((50/100.)*maskim.max())
 	else:
-		maskim = image.image(mask)
+		maskim = image(mask)
 
 	plandose.applymask(maskim)
 	otherdose.applymask(maskim)
@@ -112,14 +112,14 @@ def makedose_old(casedir,recalcdose=True,sumdoses=True):
 	tpsdosesum_fn = os.path.join(casedir,'sum_dose.xdr')
 	gpumcddosesum_fn = os.path.join(casedir,'sum_gpumcd_dose.xdr')
 
-	tpsdosesum = image.image(os.path.join(beamdirs[0],'dose.xdr'))
-	gpumcddosesum = image.image(os.path.join(beamdirs[0],'gpumcd_dose.xdr'))
+	tpsdosesum = image(os.path.join(beamdirs[0],'dose.xdr'))
+	gpumcddosesum = image(os.path.join(beamdirs[0],'gpumcd_dose.xdr'))
 
 	if len(beamdirs) > 1:
 		for beamdir in beamdirs[1:]:
 			print(os.path.join(beamdir,'dose.xdr'))
-			imaget = image.image(os.path.join(beamdir,'dose.xdr'))
-			imageg = image.image(os.path.join(beamdir,'gpumcd_dose.xdr'))
+			imaget = image(os.path.join(beamdir,'dose.xdr'))
+			imageg = image(os.path.join(beamdir,'gpumcd_dose.xdr'))
 			tpsdosesum.add(imaget)
 			gpumcddosesum.add(imageg)
 
@@ -171,13 +171,13 @@ def dvhcompare(casedir,*args,**kwargs):
 	assert os.path.isfile(dose1)
 	assert os.path.isfile(dose2)
 
-	plandose=image.image(dose1)
-	otherdose=image.image(dose2)
+	plandose=image(dose1)
+	otherdose=image(dose2)
 
 	maskim = None
 	#is there a mask?
 	if os.path.isfile(os.path.join(casedir,'ptv.xdr')):
-		maskim = image.image(os.path.absos.path(os.path.join(casedir,'ptv.xdr')))
+		maskim = image(os.path.absos.path(os.path.join(casedir,'ptv.xdr')))
 	else:
 		print('No mask or maskregion specified; using isodose 50 volume of plandose for DVH analysis.')
 		maskim = plandose.copy()
